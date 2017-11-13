@@ -1,6 +1,6 @@
 BasedOnStyle: LLVM
 AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
+IndentCaseLabels: true
 ColumnLimit: 110
 IndentWidth: 2
 TabWidth: 2
@@ -9,3 +9,4 @@ DerivePointerAlignment: false
 PointerAlignment: Right
 SpaceInEmptyParentheses: true
 SpacesInCStyleCastParentheses: true
+AllowShortFunctionsOnASingleLine: false
