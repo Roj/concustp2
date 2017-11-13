@@ -3,9 +3,11 @@
 
 /* include area */
 #include "requests.h"
-#include "socket.h"
+#include <netdb.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 /** Connection used to send the response to the clients */
 typedef struct { int fd; } client_conn_t;
