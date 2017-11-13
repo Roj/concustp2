@@ -41,20 +41,10 @@ CFLAGS += -MD
 
 # special definitions used for the unit tests
 ifeq ($(MAKECMDGOALS),$(TARGETDIR)/tests)
-    # adds an extra include so the tests can include the sources
-	INC += src
 
 	# sets the special define for tests
 	DEFINES := __TESTS__ $(DEFINES)
 
-	# includes the tests directory in the VPATH
-	VPATH := $(TESTDIR) $(VPATH)
-
-	# test sources
-	TEST_SRCS := $(shell find $(TESTDIR)/$(BIN) -type f -name *.$(SRCEXT))
-
-	# test objects
-	OBJS := $(patsubst %,$(BUILDDIR)/%,$(TEST_SRCS:.$(SRCEXT)=.o)) $(OBJS)
 endif
 
 # adds the include prefix to the include directories
@@ -77,12 +67,17 @@ bin-%:
 # compiles and runs the unit tests
 tests:
 	@$(MAKE) $(TARGETDIR)/tests BIN=tests
+	./$(TARGETDIR)/tests
 
 # shows usage
 help:
 	@echo "To compile all binaries:"
 	@echo
 	@echo "\t\033[1;92m$$ make\033[0m"
+	@echo
+	@echo "To compile and run the tests:"
+	@echo
+	@echo "\t\033[1;92m$$ make tests\033[0m"
 	@echo
 	@echo "To compile just one binary:"
 	@echo
@@ -115,12 +110,6 @@ format:
 $(TARGETDIR)/$(BIN): $(OBJS) | dirs
 	@$(CC) $(CFLAGS) $(INC) $(DEFINES) $^ $(LIB) -o $@
 	@echo "LD $@"
-
-# INTERNAL: builds and runs the unit tests
-$(TARGETDIR)/tests: $(OBJS) | dirs
-	@$(CC) $(CFLAGS) $(INC) $(DEFINES) $^ $(LIB) -o $(TARGETDIR)/tests
-	@echo "LD $@"
-	./$(TARGETDIR)/tests
 
 # rule to build object files
 $(BUILDDIR)/%.o: %.$(SRCEXT)
