@@ -27,11 +27,11 @@ static bool _field_size_serialize(size_t field_size, write_cb_t out, void *out_c
 
 static bool _parse_char(size_t *out, char c) {
   /* checks if it's a numeric value */
-  if (c < 48 || c > 57)
+  if (c < '0' || c > '9')
     return false;
 
   /* converts to size_t */
-  *out = c - 48;
+  *out = c - '0';
   return true;
 }
 

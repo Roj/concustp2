@@ -59,7 +59,7 @@ static bool _on_request(server_t *s, int client_fd) {
   }
 
   /* deserializes the request */
-  request_t req;
+  request_t req = {0};
   if (!request_deserialize(&req, _socket_read, &client_fd))
     return false;
 
@@ -105,7 +105,7 @@ bool server_init(server_t *s, uint16_t port, req_handler_t handler) {
   }
 
   /* marks the socket as passive */
-  int listenOk = listen(s->fd, 100);
+  int listenOk = listen(s->fd, MAX_PENDING_CONN);
   if (listenOk < 0) {
     perror("listen");
     close(s->fd);
@@ -148,7 +148,7 @@ bool server_handle_request(server_t *s) {
  * @return false
  */
 void server_stop(server_t *s) {
-  /* waits until all requests are handled (i.e. all childen finished) */
+  /* waits until all requests are handled (i.e. all children finished) */
   do {
     int status;
     wait(&status);

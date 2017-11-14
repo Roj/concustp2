@@ -9,6 +9,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#define MAX_PENDING_CONN 100
+
 /**
  * Server request handler
  * This callback is executed *in an independent process* whenever a
