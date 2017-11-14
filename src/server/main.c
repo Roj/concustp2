@@ -37,6 +37,7 @@ static void _handle_request(response_t *resp, const request_t *r) {
       break;
   }
 
+  // TODO: send the corresponding request
   resp->type = resp_currency;
   resp->u.currency.quote = 1.123;
 }

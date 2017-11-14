@@ -9,10 +9,16 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-/** Connection used to send the response to the clients */
-typedef struct { int fd; } client_conn_t;
-
-/** Server request handler */
+/**
+ * Server request handler
+ * This callback is executed *in an independent process* whenever a
+ * client sends a request to the server.
+ *
+ * req contains the (parsed) client's request.
+ * resp is to be filled by inside the callback with the corresponding data
+ *      and after the callback is finished, it's serialized and sent to
+ *      client.
+ */
 typedef void (*req_handler_t)(response_t *resp, const request_t *req);
 
 /** Server type */

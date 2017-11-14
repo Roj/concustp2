@@ -17,7 +17,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  // TODO: handle all requests
+  // TODO: handle all responses
   switch (resp.type) {
     case resp_currency:
       printf("Currency response: %f\n", resp.u.currency.quote);

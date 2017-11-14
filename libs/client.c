@@ -49,7 +49,7 @@ static bool _socket_write(const void *data, size_t bytes, void *cb_ctx) {
  *
  * @param resp Response to the request (output).
  * @param port Port where the request is sent to.
- * @param req Request that will be sent (properly initialized).
+ * @param req Request that will be sent (properly initialized by the caller).
  * @return false on error, true on success.
  */
 bool client_send(response_t *resp, uint16_t port, const request_t *req) {
