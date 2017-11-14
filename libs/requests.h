@@ -38,7 +38,7 @@ typedef struct { float_t quote; } currency_resp_t;
 /** Generic request type */
 typedef struct {
   req_type_t type;
-  union {
+  union { // +1 to this
     weather_req_t weather;
     currency_req_t currency;
   } u;

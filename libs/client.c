@@ -56,12 +56,14 @@ bool client_send(response_t *resp, uint16_t port, const request_t *req) {
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) {
     perror("client - socket error");
+    /* I'd rather use the log_write function in order to have a logfile
+    for each different process with specific failure info */
     return false;
   }
 
   struct sockaddr_in serv_addr = {0};
   serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(8002);
+  serv_addr.sin_port = htons(port);
 
   struct hostent *server = gethostbyname("localhost");
   if (server == NULL) {

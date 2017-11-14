@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define SELF_PORT 8002
+
 /** Flag that indicates the program should finish */
 static bool exit_flag = false;
 
@@ -26,8 +28,11 @@ void sigint_handler(int signal) {
 static void _handle_request(response_t *resp, const request_t *r) {
   // TODO: handle request properly
 
+  // Shouldn't this be delegated on the microservices??
+  /* Prop: Use a hash in order to save all pairs (city, weather) or
+   * (coin, value) */
   printf("request:\n");
-  printf(" - type: %d\n", r->type);
+  printf(" - type: %s\n", (r->type == req_weather ? "Weather" : "Currency"));
   switch (r->type) {
     case req_weather:
       printf(" - city: %s\n", str_to_cstr(&r->u.weather.city));
@@ -37,7 +42,7 @@ static void _handle_request(response_t *resp, const request_t *r) {
       break;
   }
 
-  // TODO: send the corresponding request
+  // TODO: send the corresponding response
   resp->type = resp_currency;
   resp->u.currency.quote = 1.123;
 }
@@ -49,7 +54,7 @@ int main(int argc, const char *argv[]) {
   printf("Starting server...\n");
 
   server_t server;
-  if (!server_init(&server, 8002, _handle_request)) {
+  if (!server_init(&server, SELF_PORT, _handle_request)) {
     perror("Error al iniciar servidor");
     return 1;
   }
