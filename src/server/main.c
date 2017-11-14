@@ -23,8 +23,9 @@ void sigint_handler(int signal) {
  *
  * @param s Client socket.
  */
-static void _handle_request(const request_t *r, client_conn_t *client) {
-  // TODO: handle request
+static void _handle_request(response_t *resp, const request_t *r) {
+  // TODO: handle request properly
+
   printf("request:\n");
   printf(" - type: %d\n", r->type);
   switch (r->type) {
@@ -35,6 +36,9 @@ static void _handle_request(const request_t *r, client_conn_t *client) {
       printf(" - currency: %s\n", str_to_cstr(&r->u.currency.currency));
       break;
   }
+
+  resp->type = resp_currency;
+  resp->u.currency.quote = 1.123;
 }
 
 int main(int argc, const char *argv[]) {

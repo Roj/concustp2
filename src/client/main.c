@@ -1,44 +1,30 @@
 /* include area */
-#include <errno.h>
-#include <netdb.h>
-#include <socket.h>
+#include "client.h"
+#include "str.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 int main(int argc, const char *argv[]) {
-  int fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (fd < 0) {
-    perror("socket error");
+  /* initializes the request */
+  request_t req = {0};
+  req.type = req_currency;
+  str_init(&req.u.currency.currency, "pesos");
+
+  response_t resp = {0};
+  if (!client_send(&resp, 8002, &req)) {
+    perror("Failed sending the request");
     return 1;
   }
 
-  struct sockaddr_in serv_addr = {0};
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(8002);
-
-  struct hostent *server = gethostbyname("localhost");
-  if (server == NULL) {
-    perror("ghbn");
-    close(fd);
-    return 1;
+  // TODO: handle all requests
+  switch (resp.type) {
+    case resp_currency:
+      printf("Currency response: %f\n", resp.u.currency.quote);
+      break;
+    default:
+      break;
   }
-
-  memcpy(&serv_addr.sin_addr.s_addr, server->h_addr_list[0], server->h_length);
-
-  int connectOk = connect(fd, ( const struct sockaddr * )&serv_addr, sizeof(serv_addr));
-  if (connectOk < 0) {
-    perror("connect error");
-    close(fd);
-    return 1;
-  }
-
-  /* writes a hardcoded request */
-  const char *data = "\x01"
-                     "0007"
-                     "dollars";
-  write(fd, data, strlen(data));
 
   return 0;
 }
