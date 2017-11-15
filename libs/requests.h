@@ -65,6 +65,12 @@
    Prototypes
 --------------------------------------------------------------------------*/
 
+/** Callback where a message is read from */
+typedef bool (*read_cb_t)(void *output, size_t bytes, void *cb_ctx);
+
+/** Callback where a message is written to */
+typedef bool (*write_cb_t)(const void *data, size_t bytes, void *cb_ctx);
+
 /** IO prototypes */
 bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx);
 bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx);

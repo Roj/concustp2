@@ -47,14 +47,21 @@ typedef struct message_desc {
    Prototypes
 --------------------------------------------------------------------------*/
 
-/** Callback where a message is read from */
-typedef bool (*read_cb_t)(void *output, size_t bytes, void *cb_ctx);
-
-/** Callback where a message is written to */
-typedef bool (*write_cb_t)(const void *data, size_t bytes, void *cb_ctx);
+/**
+ * @brief Message iteration callback.
+ * This callback is called for every field in the message struct (like map).
+ *
+ * The first argument is a pointer to the field currently being iterated.
+ * The second argument is the type of that field (so it can be casted properly)
+ * The third argument is the same pointer passed to the message_iter function.
+ *
+ * If the return of this callback is false, then no further fields are iterated.
+ */
+typedef bool (*iter_cb_t)(void *field, field_type_t type, void *cb_ctx);
+typedef bool (*const_iter_cb_t)(const void *field, field_type_t type, void *cb_ctx);
 
 /** IO */
-bool message_serialize(const void *message, const message_desc_t *desc, write_cb_t out, void *out_ctx);
-bool message_deserialize(void *message, const message_desc_t *desc, read_cb_t in, void *in_ctx);
+bool message_iter(void *message, const message_desc_t *desc, iter_cb_t cb, void *cb_ctx);
+bool message_iter_const(const void *message, const message_desc_t *desc, const_iter_cb_t cb, void *cb_ctx);
 
 #endif
