@@ -9,7 +9,7 @@
  * @param out_ctx Pointer passed to out.
  * @return false on error, true on success.
  */
-bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {  
+bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {
   /* writes the type as the first byte */
   char type = r->type;
   if (type >= request_last) {
@@ -39,7 +39,7 @@ bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx) {
 
   /* sets the type */
   r->type = type;
-  if( type >= request_last ) {
+  if (type >= request_last) {
     return false;
   }
 

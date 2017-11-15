@@ -102,7 +102,7 @@ static bool _read_field(void *field, field_type_t type, read_cb_t in, void *in_c
 
 /**
  * @brief Serializes a message.
- * 
+ *
  * @param message Message struct (the union).
  * @param desc The corresponding message description.
  * @param out Write callback.

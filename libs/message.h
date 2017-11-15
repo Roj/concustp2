@@ -1,6 +1,14 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+/**
+ * @brief This module handles generic messages.
+ * The messages should be declared by including "message_decl.h" (as explained
+ * in that header).
+ *
+ * The generated messages can then be used with this module's functions.
+ */
+
 /* include area */
 #include "types.h"
 #include <stddef.h>

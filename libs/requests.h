@@ -6,29 +6,25 @@
 #include "types.h"
 
 /**
- * @brief Request/response field definitions
- */
-#define WEATHER_REQ_FIELDS(request_name) FIELD(request_name, city, string)
-
-#define CURRENCY_REQ_FIELDS(request_name) FIELD(request_name, currency, string)
-
-#define WEATHER_RESP_FIELDS(response_name)                                                                   \
-  FIELD(response_name, humidity, integer)                                                                    \
-  FIELD(response_name, pressure, float)                                                                      \
-  FIELD(response_name, temperature, float)
-
-#define CURRENCY_RESP_FIELDS(response_name) FIELD(response_name, quote, float)
-
-/**
  * @brief List of requests and responses
  */
-#define REQUESTS( )                                                                                          \
-  ENTRY(weather, WEATHER_REQ_FIELDS)                                                                         \
-  ENTRY(currency, CURRENCY_REQ_FIELDS)
+// clang-format off
 
-#define RESPONSES( )                                                                                         \
-  ENTRY(weather, WEATHER_RESP_FIELDS)                                                                        \
-  ENTRY(currency, CURRENCY_RESP_FIELDS)
+#define REQUESTS( )\
+  ENTRY(weather,                               \
+    FIELD(weather, city, string))         \
+  ENTRY(currency,                              \
+    FIELD(currency, currency, string))
+
+#define RESPONSES( )                           \
+  ENTRY(weather,                               \
+    FIELD(weather, humidity, integer)    \
+    FIELD(weather, pressure, float)      \
+    FIELD(weather, temperature, float))  \
+  ENTRY(currency,                              \
+    FIELD(currency, quote, float))
+
+// clang-format on
 
 /*------------------------------------------------------------------------------
    Black magic
