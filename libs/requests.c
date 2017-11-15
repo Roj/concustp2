@@ -47,6 +47,15 @@ bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx) {
   return message_deserialize(&r->u, desc, in, in_ctx);
 }
 
+/**
+ * @brief Serializes a response, writing the serialized content through
+ * the given output callback.
+ *
+ * @param r Response to serialize (properly initialized).
+ * @param out Output callback.
+ * @param out_ctx Output callback context.
+ * @return false on error, true on success.
+ */
 bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
   /* writes the type as the first byte */
   char type = r->type;
@@ -61,6 +70,14 @@ bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
   return message_serialize(&r->u, desc, out, out_ctx);
 }
 
+/**
+ * @brief Parses a response reading the content from the "in" callback.
+ *
+ * @param r Parsed response (output).
+ * @param in Callback that gives the data to parse.
+ * @param in_ctx Pointer passed to out.
+ * @return false on error, true on success.
+ */
 bool response_deserialize(response_t *r, read_cb_t in, void *in_ctx) {
   /* the first byte indicates the type */
   char type;

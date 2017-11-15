@@ -7,6 +7,15 @@
 
 /**
  * @brief List of requests and responses
+ *
+ * Once defined in REQUESTS or RESPONSES, the struct will be available
+ * in request_t.u and response_t.u (and the corresponding request_type_t
+ * enum is also generated).
+ *
+ * Also, the serialization/deserialization is handled automatically (no
+ * need to define a (de)serialization function for every request/response).
+ *
+ * See message.h for more information.
  */
 // clang-format off
 
