@@ -100,37 +100,6 @@ static bool _read_field(void *field, field_type_t type, read_cb_t in, void *in_c
   return field_from_cstr(field, type, buffer);
 }
 
-/**
- * @brief Serializes a currency request.
- *
- * @param r Currency request to serialize.
- * @param out Callback to write the output.
- * @param out_ctx Pointer passed to out.
- * @return false on error, true on success.
- */
-static bool _serialize_currency_req(const currency_req_t *r, write_cb_t out, void *out_ctx) {
-  return _write_field(&r->currency, field_type_string, out, out_ctx);
-}
-
-static bool _deserialize_currency_req(currency_req_t *r, read_cb_t in, void *in_ctx) {
-  return _read_field(&r->currency, field_type_string, in, in_ctx);
-}
-
-/**
- * @brief Serializes a weather request.
- *
- * @param r Currency request to serialize.
- * @param out Callback to write the output.
- * @param out_ctx Pointer passed to out.
- * @return false on error, true on success.
- */
-static bool _serialize_weather_req(const weather_req_t *r, write_cb_t out, void *out_ctx) {
-  return _write_field(&r->city, field_type_string, out, out_ctx);
-}
-
-static bool _deserialize_weather_req(weather_req_t *r, read_cb_t in, void *in_ctx) {
-  return _read_field(&r->city, field_type_string, in, in_ctx);
-}
 
 static bool _serialize_currency_resp(const currency_resp_t *r, write_cb_t out, void *out_ctx) {
   return _write_field(&r->quote, field_type_float, out, out_ctx);
@@ -168,21 +137,26 @@ static bool _deserialize_weather_resp(weather_resp_t *r, read_cb_t in, void *in_
  * @param out_ctx Pointer passed to out.
  * @return false on error, true on success.
  */
-bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {
+bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {  
   /* writes the type as the first byte */
   char type = r->type;
+  if (type >= req_last) {
+    return false;
+  }
+
   if (!out(&type, 1, out_ctx))
     return false;
 
-  switch (r->type) {
-    case req_currency:
-      return _serialize_currency_req(&r->u.currency, out, out_ctx);
-    case req_weather:
-      return _serialize_weather_req(&r->u.weather, out, out_ctx);
+  const struct message_desc *desc = &request_descs[r->type];
+  for (size_t i = 0; i < desc->num_fields; i++) {
+    const void *field = ( ( uint8_t *)&r->u ) + desc->fields[i].offset;
+    if( !_write_field(field, desc->fields[i].type, out, out_ctx) ) {
+      return false;
+    }
   }
 
-  /* invalid request type */
-  return false;
+  /* success */
+  return true;
 }
 
 /**
@@ -201,16 +175,20 @@ bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx) {
 
   /* sets the type */
   r->type = type;
-
-  switch (r->type) {
-    case req_currency:
-      return _deserialize_currency_req(&r->u.currency, in, in_ctx);
-    case req_weather:
-      return _deserialize_weather_req(&r->u.weather, in, in_ctx);
+  if( type >= req_last ) {
+    return false;
   }
 
-  /* invalid request type */
-  return false;
+  const struct message_desc *desc = &request_descs[r->type];
+  for (size_t i = 0; i < desc->num_fields; i++) {
+    void *field = (( uint8_t * )&r->u) + desc->fields[i].offset;
+    if (!_read_field(field, desc->fields[i].type, in, in_ctx)) {
+      return false;
+    }
+  }
+
+  /* success */
+  return true;
 }
 
 bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
