@@ -10,7 +10,7 @@
 int main(int argc, const char *argv[]) {
   /* initializes the request */
   request_t req = {0};
-  req.type = req_currency;
+  req.type = request_currency;
   str_init(&req.u.currency.currency, "pesos");
 
   response_t resp = {0};
@@ -21,7 +21,7 @@ int main(int argc, const char *argv[]) {
 
   // TODO: handle all responses
   switch (resp.type) {
-    case resp_currency:
+    case response_currency:
       printf("Currency response: %f\n", resp.u.currency.quote);
       break;
     default:

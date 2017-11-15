@@ -35,7 +35,7 @@ static bool _read_cb(void *data, size_t bytes, void *cb_ctx) {
 
 TEST(RequestSerialize) {
   {
-    request_t r = {.type = req_currency};
+    request_t r = {.type = request_currency};
     ASSERT_TRUE(str_init(&r.u.currency.currency, PESOS));
 
     buffer_t buffer = {0};
@@ -45,7 +45,7 @@ TEST(RequestSerialize) {
     ASSERT_EQ(buffer.bytes, 10);
 
     /* checks the type */
-    ASSERT_EQ(buffer.data[0], req_currency);
+    ASSERT_EQ(buffer.data[0], request_currency);
 
     /* checks the field size */
     ASSERT_EQ(memcmp(buffer.data + 1, "0005", MAX_SIZE_IN_BYTES), 0);
@@ -54,7 +54,7 @@ TEST(RequestSerialize) {
     ASSERT_EQ(memcmp(buffer.data + 5, PESOS, 5), 0);
   }
   {
-    request_t r = {.type = req_weather};
+    request_t r = {.type = request_weather};
     ASSERT_TRUE(str_init(&r.u.weather.city, BSAS));
 
     buffer_t buffer = {0};
@@ -64,7 +64,7 @@ TEST(RequestSerialize) {
     ASSERT_EQ(buffer.bytes, 17);
 
     /* checks the type */
-    ASSERT_EQ(buffer.data[0], req_weather);
+    ASSERT_EQ(buffer.data[0], request_weather);
 
     /* checks the field size */
     ASSERT_EQ(memcmp(buffer.data + 1, "0012", MAX_SIZE_IN_BYTES), 0);
@@ -89,7 +89,7 @@ TEST(RequestDeserialize) {
     ASSERT_TRUE(request_deserialize(&r, _read_cb, &buffer));
     ASSERT_EQ(buffer.bytes_read, buffer.bytes);
 
-    ASSERT_EQ(r.type, req_currency);
+    ASSERT_EQ(r.type, request_currency);
     ASSERT_EQ(cstr_cmp(&r.u.currency.currency, "dollars"), 0);
 
 #undef DATA
@@ -107,7 +107,7 @@ TEST(RequestDeserialize) {
     ASSERT_TRUE(request_deserialize(&r, _read_cb, &buffer));
     ASSERT_EQ(buffer.bytes_read, buffer.bytes);
 
-    ASSERT_EQ(r.type, req_weather);
+    ASSERT_EQ(r.type, request_weather);
     ASSERT_EQ(cstr_cmp(&r.u.weather.city, SE), 0);
 
 #undef DATA
@@ -116,7 +116,7 @@ TEST(RequestDeserialize) {
 
 TEST(ResponseSerialize) {
   {
-    response_t r = {.type = resp_weather};
+    response_t r = {.type = response_weather};
     r.u.weather.humidity = 57;
     r.u.weather.pressure = 1.2;
     r.u.weather.temperature = 27.3;
@@ -128,7 +128,7 @@ TEST(ResponseSerialize) {
     ASSERT_EQ(buffer.bytes, 28);
 
     /* checks the type */
-    ASSERT_EQ(buffer.data[0], resp_weather);
+    ASSERT_EQ(buffer.data[0], response_weather);
 
     /* checks the field size */
     ASSERT_EQ(memcmp(buffer.data + 1, "0002", MAX_SIZE_IN_BYTES), 0);

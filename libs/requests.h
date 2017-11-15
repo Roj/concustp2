@@ -2,61 +2,73 @@
 #define REQUESTS_H
 
 /* include area */
+#include "message.h"
 #include "types.h"
 
-/** The number of bytes used to serialize the field size */
-#define MAX_SIZE_IN_BYTES 4
+/**
+ * @brief List of requests and responses
+ *
+ * Once defined in REQUESTS or RESPONSES, the struct will be available
+ * in request_t.u and response_t.u (and the corresponding request_type_t
+ * enum is also generated).
+ *
+ * Also, the serialization/deserialization is handled automatically (no
+ * need to define a (de)serialization function for every request/response).
+ *
+ * See message.h for more information.
+ */
+// clang-format off
 
-/** Request types */
-typedef enum {
-  req_weather,
-  req_currency,
-} req_type_t;
+#define REQUESTS( )\
+  ENTRY(weather,                               \
+    FIELD(weather, city, string))              \
+  ENTRY(currency,                              \
+    FIELD(currency, currency, string))
 
-/** Response types */
-typedef enum {
-  resp_weather,
-  resp_currency,
-} resp_type_t;
+#define RESPONSES( )                           \
+  ENTRY(weather,                               \
+    FIELD(weather, humidity, integer)          \
+    FIELD(weather, pressure, float)            \
+    FIELD(weather, temperature, float))        \
+  ENTRY(currency,                              \
+    FIELD(currency, quote, float))
 
-/** Weather request */
-typedef struct { string_t city; } weather_req_t;
+// clang-format on
 
-/** Response to a weather request */
-typedef struct {
-  float_t temperature;
-  float_t pressure;
-  integer_t humidity;
-} weather_resp_t;
+/*------------------------------------------------------------------------------
+   Black magic
+------------------------------------------------------------------------------*/
 
-/** Currency quote request */
-typedef struct { string_t currency; } currency_req_t;
+/**
+ * @brief Generates the request types.
+ */
+#define MESSAGE_NAME request
+#define MESSAGES REQUESTS( )
 
-/** Currency quote response */
-typedef struct { float_t quote; } currency_resp_t;
+#include "message_decl.h"
 
-/** Generic request type */
-typedef struct {
-  req_type_t type;
-  union { // +1 to this
-    weather_req_t weather;
-    currency_req_t currency;
-  } u;
-} request_t;
+#undef MESSAGES
+#undef MESSAGE_NAME
 
-/** Generic response type */
-typedef struct {
-  resp_type_t type;
-  union {
-    weather_resp_t weather;
-    currency_resp_t currency;
-  } u;
-} response_t;
+/**
+ * @brief Generates the response types.
+ */
+#define MESSAGE_NAME response
+#define MESSAGES RESPONSES( )
 
-/** Callback where a response/request is read from */
+#include "message_decl.h"
+
+#undef MESSAGES
+#undef MESSAGE_NAME
+
+/*--------------------------------------------------------------------------
+   Prototypes
+--------------------------------------------------------------------------*/
+
+/** Callback where a message is read from */
 typedef bool (*read_cb_t)(void *output, size_t bytes, void *cb_ctx);
 
-/** Callback where a response/request is written to */
+/** Callback where a message is written to */
 typedef bool (*write_cb_t)(const void *data, size_t bytes, void *cb_ctx);
 
 /** IO prototypes */

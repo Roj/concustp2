@@ -32,18 +32,20 @@ static void _handle_request(response_t *resp, const request_t *r) {
   /* Prop: Use a hash in order to save all pairs (city, weather) or
    * (coin, value) */
   printf("request:\n");
-  printf(" - type: %s\n", (r->type == req_weather ? "Weather" : "Currency"));
+  printf(" - type: %s\n", (r->type == request_weather ? "Weather" : "Currency"));
   switch (r->type) {
-    case req_weather:
+    case request_weather:
       printf(" - city: %s\n", str_to_cstr(&r->u.weather.city));
       break;
-    case req_currency:
+    case request_currency:
       printf(" - currency: %s\n", str_to_cstr(&r->u.currency.currency));
       break;
+    case request_last:
+      return;
   }
 
   // TODO: send the corresponding response
-  resp->type = resp_currency;
+  resp->type = response_currency;
   resp->u.currency.quote = 1.123;
 }
 
