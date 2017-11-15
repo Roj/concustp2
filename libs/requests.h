@@ -12,15 +12,15 @@
 
 #define REQUESTS( )\
   ENTRY(weather,                               \
-    FIELD(weather, city, string))         \
+    FIELD(weather, city, string))              \
   ENTRY(currency,                              \
     FIELD(currency, currency, string))
 
 #define RESPONSES( )                           \
   ENTRY(weather,                               \
-    FIELD(weather, humidity, integer)    \
-    FIELD(weather, pressure, float)      \
-    FIELD(weather, temperature, float))  \
+    FIELD(weather, humidity, integer)          \
+    FIELD(weather, pressure, float)            \
+    FIELD(weather, temperature, float))        \
   ENTRY(currency,                              \
     FIELD(currency, quote, float))
 
