@@ -1,5 +1,6 @@
 /* include area */
 #include "server.h"
+#include "client.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +27,17 @@ void sigint_handler(int signal) {
  * @param s Client socket.
  */
 static void _handle_request(response_t *resp, const request_t *r) {
+  //Send request to relevant microservice.
+  //XXX: Question: should the middleware do more than that?
+  if (!client_send(resp, SELF_PORT+r->type, r)) {
+    perror("Error sending the request to the microservice");
+    return;
+  }
+
+}
+
+static void _micro_handle_request(response_t *resp, const request_t *r) {
+  
   // TODO: handle request properly
 
   // Shouldn't this be delegated on the microservices??
@@ -49,6 +61,26 @@ static void _handle_request(response_t *resp, const request_t *r) {
   resp->u.currency.quote = 1.123;
 }
 
+int launch_microservice(request_type_t type) {  
+  server_t microserver;
+
+  int port = SELF_PORT + type + 1; //Add +1, since enums start at 0.
+  if (!server_init(&microserver, port, _micro_handle_request)) {
+    perror("Error al iniciar el microservicio");
+    return 1;
+  }
+
+  /* handles client (portal, middleware's) requests */
+  while (!exit_flag) {
+    printf("waiting connection...\n");
+    if (!server_handle_request(&microserver)) {
+      break;
+    }
+  }
+
+  server_stop(&microserver);
+  return 0;
+}
 int main(int argc, const char *argv[]) {
   /* signal handling */
   signal(SIGINT, sigint_handler);
@@ -62,6 +94,28 @@ int main(int argc, const char *argv[]) {
   }
 
   printf("server started!\n");
+  
+  /* microservicios */
+  printf("Launching microservices..");
+
+  int fork_weather = fork();
+  if (fork_weather < 0) {
+    perror("Error al iniciar el servicio del clima");
+    return 2;
+  }
+
+  if (fork_weather == 0)
+    return launch_microservice(request_weather);
+
+  int fork_currency = fork();
+  
+  if (fork_currency < 0) {
+    perror("Error al iniciar el servicio de divisas");
+    return 2;
+  }
+  
+  if (fork_currency == 0)
+    return launch_microservice(request_currency);
 
   /* handles client requests */
   while (!exit_flag) {
