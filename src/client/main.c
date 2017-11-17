@@ -109,9 +109,6 @@ int main(int argc, const char *argv[]) {
   /* initializes the request */
   request_t req = {0};
   
-  req.type = request_currency;
-  str_init(&req.u.currency.currency, "pesos");
-
   if(!_parse_request(&req, argc, argv))
     return 1;
     
