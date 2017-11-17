@@ -14,7 +14,7 @@ bool message_iter(void *message, const message_desc_t *desc, iter_cb_t cb, void 
   /* iterates through the message fields applying the callback on them */
   for (size_t i = 0; i < desc->num_fields; i++) {
     void *field = (( uint8_t * )message) + desc->fields[i].offset;
-    if (!cb(field, desc->fields[i].type, cb_ctx)) {
+    if (!cb(field, &desc->fields[i], cb_ctx)) {
       return false;
     }
   }
@@ -35,7 +35,7 @@ bool message_iter_const(const void *message, const message_desc_t *desc, const_i
   /* iterates through the message fields applying the callback on them */
   for (size_t i = 0; i < desc->num_fields; i++) {
     void *field = (( uint8_t * )message) + desc->fields[i].offset;
-    if (!cb(field, desc->fields[i].type, cb_ctx)) {
+    if (!cb(field, &desc->fields[i], cb_ctx)) {
       return false;
     }
   }

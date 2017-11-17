@@ -123,12 +123,14 @@ MESSAGES
  * Continuing the previous example:
  *
  *    static const struct field_desc foobar_foo_fields_list[] = {
- *      { .type = field_type_float, .offset = offsetof( foobar_foo_t, bar ) },
- *      { .type = field_type_integer, .offset = offsetof( foobar_foo_t, bar2 ) },
+ *      { .name = "bar", .type = field_type_float, .offset = offsetof( foobar_foo_t, bar ) },
+ *      { .name = "bar2", .type = field_type_integer, .offset = offsetof( foobar_foo_t, bar2 ) },
  *    };
  */
 #define FIELD(msg_name, field_name, field_type)                                                              \
-  {.type = field_type_##field_type, .offset = offsetof(CONCAT4(MESSAGE_NAME, _, msg_name, _t), field_name)},
+  {.name = #field_name,                                                                                      \
+   .type = field_type_##field_type,                                                                          \
+   .offset = offsetof(CONCAT4(MESSAGE_NAME, _, msg_name, _t), field_name)},
 #define ENTRY(name, ...)                                                                                     \
   static const struct field_desc CONCAT4(MESSAGE_NAME, name, _, fields_list)[] = {__VA_ARGS__};
 

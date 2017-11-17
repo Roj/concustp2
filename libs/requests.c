@@ -75,21 +75,21 @@ static bool _field_size_deserialize(size_t *field_size, read_cb_t in, void *in_c
  * @brief Writes a serialized field through the out callback.
  *
  * @param field Field to serialize and output.
- * @param type Field type.
+ * @param desc Field description.
  * @param cb_ctx Callback context.
  * @return false on error, true on success.
  */
-static bool _field_serialize(const void *field, field_type_t type, void *cb_ctx) {
+static bool _field_serialize(const void *field, const field_desc_t *desc, void *cb_ctx) {
   serialization_ctx_t *ctx = cb_ctx;
 
   /* gets the number of bytes required to serialize the field */
-  size_t buffer_size = field_to_cstr(NULL, 0, field, type);
+  size_t buffer_size = field_to_cstr(NULL, 0, field, desc->type);
   if (buffer_size == 0)
     return false;
 
   /* serializes the field */
   char buffer[buffer_size];
-  if (field_to_cstr(buffer, buffer_size, field, type) == 0)
+  if (field_to_cstr(buffer, buffer_size, field, desc->type) == 0)
     return false;
 
   /* outputs the buffer size and it's content */
@@ -104,11 +104,11 @@ static bool _field_serialize(const void *field, field_type_t type, void *cb_ctx)
  * @brief Reads a serialized field and deserializes it.
  *
  * @param field Field to deserialize.
- * @param type Field type.
+ * @param desc Field description.
  * @param cb_ctx Callback context.
  * @return false on error, true on success.
  */
-static bool _field_deserialize(void *field, field_type_t type, void *cb_ctx) {
+static bool _field_deserialize(void *field, const field_desc_t *desc, void *cb_ctx) {
   deserialization_ctx_t *ctx = cb_ctx;
 
   /* gets the number of bytes used to serialize the field */
@@ -124,7 +124,7 @@ static bool _field_deserialize(void *field, field_type_t type, void *cb_ctx) {
   buffer[field_size] = '\0';
 
   /* deserializes */
-  return field_from_cstr(field, type, buffer);
+  return field_from_cstr(field, desc->type, buffer);
 }
 
 /**

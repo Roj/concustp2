@@ -28,12 +28,14 @@
 --------------------------------------------------------------------------*/
 
 /** Field description. */
-struct field_desc {
+typedef struct field_desc {
   /** Field type */
   field_type_t type;
   /** offset (in bytes) of the field from the beggining of the message struct */
   size_t offset;
-};
+  /** Field name as a C string. */
+  const char *name;
+} field_desc_t;
 
 /** Message description. */
 typedef struct message_desc {
@@ -57,8 +59,8 @@ typedef struct message_desc {
  *
  * If the return of this callback is false, then no further fields are iterated.
  */
-typedef bool (*iter_cb_t)(void *field, field_type_t type, void *cb_ctx);
-typedef bool (*const_iter_cb_t)(const void *field, field_type_t type, void *cb_ctx);
+typedef bool (*iter_cb_t)(void *field, const field_desc_t *desc, void *cb_ctx);
+typedef bool (*const_iter_cb_t)(const void *field, const field_desc_t *desc, void *cb_ctx);
 
 /** IO */
 bool message_iter(void *message, const message_desc_t *desc, iter_cb_t cb, void *cb_ctx);
