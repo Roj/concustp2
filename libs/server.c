@@ -65,7 +65,7 @@ static bool _on_request(server_t *s, int client_fd) {
 
   /* calls the handler */
   response_t resp = {0};
-  s->handler(&resp, &req);
+  s->handler(&resp, &req, s);
 
   /* sends the response */
   if (!response_serialize(&resp, _socket_write, &client_fd)) {

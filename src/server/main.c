@@ -25,7 +25,7 @@ void sigint_handler(int signal) {
  *
  * @param s Client socket.
  */
-static void _handle_request(response_t *resp, const request_t *r) {
+static void _handle_request(response_t *resp, const request_t *r, const server_t *serv) {
   //Send request to relevant microservice.
   //XXX: Question: should the middleware do more than that?
   if (!client_send(resp, SELF_PORT + r->type + 1, r)) {
