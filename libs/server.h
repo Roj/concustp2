@@ -10,6 +10,7 @@
 #include <sys/types.h>
 
 #define MAX_PENDING_CONN 100
+#define SELF_PORT 8002
 
 /**
  * Server request handler
