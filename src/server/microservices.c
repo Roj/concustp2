@@ -30,10 +30,12 @@ static void _handle_currency(response_t *resp, const request_t *r, const server_
  */
 static void _micro_handle_request(response_t *resp, const request_t *r, const server_t* serv) {
 
-  //A valid question is: why define the server's type if we still
-  //have to switch() to get the corresponding behavior?
-  //Well, while it is true, it doesn't look like a true microservice
-  //if a process can handle any request.
+  // A valid question is: why define the server's type if we still
+  // have to switch() to get the corresponding behavior?
+  // Well, while it is true, it doesn't look like a true microservice
+  // if a process can handle any request.
+  // Furthermore, in the future we might add more context to the server struct
+  // (pending discussion on PR #9)
 
   if (r->type != serv->type && r->type != request_last) {
     perror("Sent request to wrong server!");

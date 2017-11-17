@@ -21,18 +21,17 @@ void sigint_handler(int signal) {
 }
 
 /**
- * @brief Request handler.
+ * @brief Middleware request handler.
  *
- * @param s Client socket.
+ * @param response to be formed, request sent by client, and server struct entity.
  */
 static void _handle_request(response_t *resp, const request_t *r, const server_t *serv) {
-  //Send request to relevant microservice.
-  //XXX: Question: should the middleware do more than that?
+  // Send request to relevant microservice.
+  // XXX: Question: should the middleware do more than this?
   if (!client_send(resp, SELF_PORT + r->type + 1, r)) {
     perror("Error sending the request to the microservice");
     return;
   }
-
 }
 
 int main(int argc, const char *argv[]) {
@@ -48,11 +47,11 @@ int main(int argc, const char *argv[]) {
   }
 
   printf("server started!\n");
-  
+
   /* microservicios */
   printf("Launching microservices..\n");
 
-  int fork_weather = fork();
+  int fork_weather = fork( );
   if (fork_weather < 0) {
     perror("Error al iniciar el servicio del clima");
     return 2;
@@ -61,13 +60,13 @@ int main(int argc, const char *argv[]) {
   if (fork_weather == 0)
     return launch_microservice(request_weather, &exit_flag);
 
-  int fork_currency = fork();
-  
+  int fork_currency = fork( );
+
   if (fork_currency < 0) {
     perror("Error al iniciar el servicio de divisas");
     return 2;
   }
-  
+
   if (fork_currency == 0)
     return launch_microservice(request_currency, &exit_flag);
 
