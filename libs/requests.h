@@ -23,11 +23,20 @@
   ENTRY(weather,                               \
     FIELD(weather, city, string))              \
   ENTRY(currency,                              \
-    FIELD(currency, currency, string))
+    FIELD(currency, currency, string))         \
+  ENTRY(post_weather,                          \
+    FIELD(weather, city, string)               \
+    FIELD(post_weather, humidity, float)       \
+    FIELD(post_weather, pressure, float)       \
+    FIELD(post_weather, temperature, float))   \
+  ENTRY(post_currency,                         \
+    FIELD(post_currency, currency, string)     \
+    FIELD(post_currency, value, float))        \
+
 
 #define RESPONSES( )                           \
   ENTRY(weather,                               \
-    FIELD(weather, humidity, integer)          \
+    FIELD(weather, humidity, float)            \
     FIELD(weather, pressure, float)            \
     FIELD(weather, temperature, float))        \
   ENTRY(currency,                              \

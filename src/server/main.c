@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define SELF_PORT 8002
+#define INVALID_VALUE -999
 
 /** Flag that indicates the program should finish */
 static bool exit_flag = false;
@@ -32,7 +33,7 @@ static void _handle_request(response_t *resp, const request_t *r) {
   /* Prop: Use a hash in order to save all pairs (city, weather) or
    * (coin, value) */
   printf("request:\n");
-  printf(" - type: %s\n", (r->type == request_weather ? "Weather" : "Currency"));
+  printf(" - type: %d\n", r->type + 1);
   switch (r->type) {
     case request_weather:
       printf(" - city: %s\n", str_to_cstr(&r->u.weather.city));
@@ -40,7 +41,18 @@ static void _handle_request(response_t *resp, const request_t *r) {
     case request_currency:
       printf(" - currency: %s\n", str_to_cstr(&r->u.currency.currency));
       break;
-    case request_last:
+    case request_post_currency:
+      printf(" - currency: %s\n", str_to_cstr(&r->u.post_currency.currency));
+      printf(" - value: %f\n", r->u.post_currency.value);
+      break;
+    case request_post_weather:
+      // If any of this equals INVALID_VALUE, you MUSTNT update that value
+      printf(" - city: %s\n", str_to_cstr(&r->u.post_weather.city));
+      printf(" - temperature: %f\n", r->u.post_weather.temperature);
+      printf(" - pressure: %f\n", r->u.post_weather.pressure);
+      printf(" - humidity: %f\n", r->u.post_weather.humidity);
+      break;
+    default:
       return;
   }
 
