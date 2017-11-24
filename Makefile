@@ -9,7 +9,7 @@ SRCEXT      := c
 # compiler parameters
 CC          := gcc
 CFLAGS      := -g3 -std=c99 -Wall -Wpedantic -Werror
-LIB         :=
+LIB         := jansson
 INC         := /usr/local/include libs
 DEFINES     :=
 

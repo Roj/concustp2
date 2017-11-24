@@ -13,11 +13,15 @@ int main(int argc, const char *argv[]) {
   request_t req = {0};
   srand(time(NULL));
   if (rand() % 2 == 1) {
+    char* ciudades[] = {"buenos aires", "bahia blanca", "comodo rivadavia"};
+    char* ciudad = ciudades[rand() % 3];
     req.type = request_weather;
-    str_init(&req.u.weather.city, "buenos aires");
+    str_init(&req.u.weather.city, ciudad);
   } else {
+    char* monedas[] = {"peso", "euro", "dollar"};
+    char* moneda = monedas[rand() % 3];
     req.type = request_currency;
-    str_init(&req.u.currency.currency, "peso");
+    str_init(&req.u.currency.currency, moneda);
   }
 
   response_t resp = {0};

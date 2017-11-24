@@ -1,13 +1,14 @@
 #include "microservices.h"
+#include <jansson.h>
+#define WEATHER_JSON_FILE "weather.json"
+#define CURRENCY_JSON_FILE "currency.json"
 
 typedef struct weather_ctx {
-  int humidity;
-  double pressure;
-  double temperature;
+  json_t* json;
 } weather_ctx_t;
 
 typedef struct currency_ctx {
-  double value;
+  json_t* json;
 } currency_ctx_t;
 
 /**
@@ -22,9 +23,13 @@ void _create_weather_context(server_t* serv) {
     return;
   }
   serv->context = context;
-  context->humidity = 83;
-  context->pressure = 10130;
-  context->temperature = 29.3;
+  json_error_t json_load_error;
+  json_t* weather_json = json_load_file(WEATHER_JSON_FILE, 0, &json_load_error);
+  if (weather_json == NULL) {
+    perror("Failed JSON load of weather file!");
+    return;
+  }
+  context->json = weather_json;
 }
 
 /**
@@ -39,7 +44,13 @@ void _create_currency_context(server_t* serv) {
     return;
   }
   serv->context = context;
-  context->value = 1.99;
+  json_error_t json_load_error;
+  json_t* currency_json = json_load_file(CURRENCY_JSON_FILE, 0, &json_load_error);
+  if (currency_json == NULL) {
+    perror("Failed JSON load of currency file!");
+    return;
+  }
+  context->json = currency_json;
 }
 /**
  * @brief Fills a response with the weather status for a given city.
@@ -47,9 +58,16 @@ void _create_currency_context(server_t* serv) {
  * @param weather context of server (w/ structures), city name and struct* weather response.
  */
 void _get_city_weather(weather_ctx_t* context, const string_t* city, response_weather_t* resp) {
-  resp->humidity = context->humidity;
-  resp->temperature = context->temperature;
-  resp->pressure = context->pressure;
+  json_t* weather_json = json_object_get(context->json, str_to_cstr(city));
+  if (weather_json == NULL) {
+    perror("Error trying to fetch weather info for city");
+    return;
+  }
+  //This doesn't lose memory because of borrowed references.
+  //https://jansson.readthedocs.io/en/2.10/apiref.html#c.json_decref
+  resp->humidity = json_integer_value(json_object_get(weather_json, "humidity"));
+  resp->pressure = json_real_value(json_object_get(weather_json, "pressure"));
+  resp->temperature = json_real_value(json_object_get(weather_json, "temperature"));
 }
 /**
  * @brief Handle the weather micro service request.
@@ -71,7 +89,7 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
  * @param currency context of server (w/ structures) and currency name.
  */
 double _get_currency_exchange(currency_ctx_t* context, const string_t* currency) {
-  return 1.93;
+  return json_real_value(json_object_get(context->json, str_to_cstr(currency)));
 }
 /**
  * @brief Handle the currency micro service request.

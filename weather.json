@@ -1,0 +1,17 @@
+{
+	"buenos aires": {
+		"humidity": 53,
+		"temperature": 21.22,
+		"pressure": 1030.92
+	},
+	"bahia blanca": {
+		"humidity": 27,
+		"temperature": 17.00,
+		"pressure": 998
+	},
+	"comodoro rivadavia": {
+		"humidity": 36,
+		"temperature": 36.00,
+		"pressure": 1058.32
+	}
+}
