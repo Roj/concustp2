@@ -36,6 +36,7 @@ struct server {
   struct sockaddr_in cli_addr;
   req_handler_t handler;
   request_type_t type; //Used in microservices. Ignored in middleware.
+  void* context; //Optional. Aids microservices to hold state.
 };
 
 /*-------------------------------------------------------------------------
