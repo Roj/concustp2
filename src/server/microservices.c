@@ -1,7 +1,7 @@
 #include "microservices.h"
 
 typedef struct weather_ctx {
-  double humidity;
+  int humidity;
   double pressure;
   double temperature;
 } weather_ctx_t;
@@ -42,6 +42,16 @@ void _create_currency_context(server_t* serv) {
   context->value = 1.99;
 }
 /**
+ * @brief Fills a response with the weather status for a given city.
+ *
+ * @param weather context of server (w/ structures), city name and struct* weather response.
+ */
+void _get_city_weather(weather_ctx_t* context, const string_t* city, response_weather_t* resp) {
+  resp->humidity = context->humidity;
+  resp->temperature = context->temperature;
+  resp->pressure = context->pressure;
+}
+/**
  * @brief Handle the weather micro service request.
  *
  * @param response and request structures, along with server structure.
@@ -52,9 +62,16 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
   //TODO: send weather response according to city
   weather_ctx_t* context = (weather_ctx_t*) serv->context;
   resp->type = response_weather;
-  resp->u.weather.humidity = context->humidity;
-  resp->u.weather.pressure = context->pressure;
-  resp->u.weather.temperature = context->temperature;
+  _get_city_weather(context, &r->u.weather.city, &resp->u.weather);
+}
+
+/**
+ * @brief Obtains the exchange value for a given currency.
+ *
+ * @param currency context of server (w/ structures) and currency name.
+ */
+double _get_currency_exchange(currency_ctx_t* context, const string_t* currency) {
+  return 1.93;
 }
 /**
  * @brief Handle the currency micro service request.
@@ -67,7 +84,7 @@ static void _handle_currency(response_t *resp, const request_t *r, const server_
   //TODO: send currency response according to currency
   currency_ctx_t* context = (currency_ctx_t*) serv->context;
   resp->type = response_currency;
-  resp->u.currency.quote = context->value;
+  resp->u.currency.quote = _get_currency_exchange(context, &r->u.currency.currency);
 }
 /**
  * @brief Handle the micro service request. 
