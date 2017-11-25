@@ -33,6 +33,34 @@ void _create_weather_context(server_t* serv) {
 }
 
 /**
+ * @brief Frees the resources associated to the weather microserv. Optionally writes the state to disk.
+ *
+ * @param pointer to server structure & bool to save state.
+ */
+void _finish_weather_service(server_t* serv, bool save_state) {
+    weather_ctx_t* ctx = serv->context;
+    if (json_dump_file(ctx->json, WEATHER_JSON_FILE, 0) == -1) {
+      perror("Error saving weather state to file");
+    }
+    json_decref(ctx->json);
+    free(ctx);
+}
+
+/**
+ * @brief Frees the resources associated to the currency microserv. Optionally writes the state to disk.
+ *
+ * @param pointer to server structure & bool to save state.
+ */
+void _finish_currency_service(server_t* serv, bool save_state) {
+    weather_ctx_t* ctx = serv->context;
+    if (json_dump_file(ctx->json, CURRENCY_JSON_FILE, 0) == -1) {
+      perror("Error saving currency state to file");
+    }
+    json_decref(ctx->json);
+    free(ctx);
+}
+
+/**
  * @brief Allocates the context for a microsever of type currency.
  *
  * @param pointer to server structure.
@@ -168,6 +196,14 @@ int launch_microservice(request_type_t type, bool* exit_flag) {
     if (!server_handle_request(&microserver)) {
       break;
     }
+  }
+  
+  if (type == request_weather) {
+    // If flag is true, weather state is saved to file.
+    _finish_weather_service(&microserver, *exit_flag);
+  } else if(type == request_currency) {
+    //Same, but with currencies.
+    _finish_currency_service(&microserver, *exit_flag);
   }
 
   server_stop(&microserver);
