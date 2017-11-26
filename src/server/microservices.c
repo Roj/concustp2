@@ -133,11 +133,10 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
   if (r->type == request_post_weather) {
     // Set weather.
     _set_city_weather(context, &r->u.weather.city, r);
-  } else {
-    // Get weather status.
-    resp->type = response_weather;
-    _get_city_weather(context, &r->u.weather.city, &resp->u.weather);
   }
+  // Get weather status.
+  resp->type = response_weather;
+  _get_city_weather(context, &r->u.weather.city, &resp->u.weather);
 }
 
 /**
@@ -161,10 +160,8 @@ void _set_currency_exchange(currency_ctx_t* context, const string_t* currency, c
     return;
   }
   // As before, we could re-use some macros here.
-  if (VALID(r->u.post_currency.value)) {
-    printf("OK: value is valid. Then, setting it!\n");
-    json_object_set_new(currency_json, str_to_cstr(currency), json_real(r->u.post_currency.value));
-  }
+  if (VALID(r->u.post_currency.value)) 
+    json_real_set(currency_json, r->u.post_currency.value);
 }
 
 /**

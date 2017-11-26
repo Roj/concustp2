@@ -64,10 +64,10 @@ static void _print_help() {
   printf("--t : Defines temperature value (fails if administrator cannot authenticate)\n");   
   printf("--h : Defines humidity value (fails if administrator cannot authenticate)\n");
   printf("\nSome usage examples:\n");
-  printf("client %d \"La Plata\" : Retrieves \"La Plata\" city weather\n", request_weather + 1);
+  printf("client %d \"buenos aires\" : Retrieves \"buenos aires\" city weather\n", request_weather + 1);
   printf("client %d \"Dolar\" : Retrieves \"Dolar\" currency value\n", request_currency + 1);
   printf("client %d \"Dolar\" --pass PASS --c 18.00 : Sets \"Dolar\" currency value to 18 (if PASS is correct)\n", request_post_currency + 1);
-  printf("client %d \"La Plata\" --p 1001.1 --t 26.2 --pass PASS : Sets \"La Plata\" presure to 1001.1 and temperature to 26.2 (if PASS is correct)\n", request_post_weather + 1);      
+  printf("client %d \"buenos aires\" --p 1001.1 --t 26.2 --pass PASS : Sets \"buenos aires\" presure to 1001.1 and temperature to 26.2 (if PASS is correct)\n", request_post_weather + 1);      
 }
 
 /**
