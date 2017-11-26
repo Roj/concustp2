@@ -10,7 +10,9 @@
 #include <sys/types.h>
 
 #define MAX_PENDING_CONN 100
+#define SELF_PORT 8002
 
+typedef struct server server_t;
 /**
  * Server request handler
  * This callback is executed *in an independent process* whenever a
@@ -21,15 +23,21 @@
  *      and after the callback is finished, it's serialized and sent to
  *      client.
  */
-typedef void (*req_handler_t)(response_t *resp, const request_t *req);
+typedef void (*req_handler_t)(
+  response_t *resp, 
+  const request_t *req, 
+  const struct server *serv
+);
 
 /** Server type */
-typedef struct {
+struct server {
   int fd;
   struct sockaddr_in serv_addr;
   struct sockaddr_in cli_addr;
   req_handler_t handler;
-} server_t;
+  request_type_t type; //Used in microservices. Ignored in middleware.
+  void* context; //Optional. Aids microservices to hold state.
+};
 
 /*-------------------------------------------------------------------------
   Server
