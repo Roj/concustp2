@@ -3,3 +3,5 @@
 main
 *.log
 *~
+int
+target

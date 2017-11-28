@@ -1,11 +1,11 @@
 /* include area */
 #include "server.h"
+#include "client.h"
+#include "microservices.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#define SELF_PORT 8002
 
 /** Flag that indicates the program should finish */
 static bool exit_flag = false;
@@ -21,32 +21,17 @@ void sigint_handler(int signal) {
 }
 
 /**
- * @brief Request handler.
+ * @brief Middleware request handler.
  *
- * @param s Client socket.
+ * @param response to be formed, request sent by client, and server struct entity.
  */
-static void _handle_request(response_t *resp, const request_t *r) {
-  // TODO: handle request properly
-
-  // Shouldn't this be delegated on the microservices??
-  /* Prop: Use a hash in order to save all pairs (city, weather) or
-   * (coin, value) */
-  printf("request:\n");
-  printf(" - type: %s\n", (r->type == request_weather ? "Weather" : "Currency"));
-  switch (r->type) {
-    case request_weather:
-      printf(" - city: %s\n", str_to_cstr(&r->u.weather.city));
-      break;
-    case request_currency:
-      printf(" - currency: %s\n", str_to_cstr(&r->u.currency.currency));
-      break;
-    case request_last:
-      return;
+static void _handle_request(response_t *resp, const request_t *r, const server_t *serv) {
+  // Send request to relevant microservice.
+  // XXX: Question: should the middleware do more than this?
+  if (!client_send(resp, SELF_PORT + r->type + 1, r)) {
+    perror("Error sending the request to the microservice");
+    return;
   }
-
-  // TODO: send the corresponding response
-  resp->type = response_currency;
-  resp->u.currency.quote = 1.123;
 }
 
 int main(int argc, const char *argv[]) {
@@ -62,6 +47,28 @@ int main(int argc, const char *argv[]) {
   }
 
   printf("server started!\n");
+
+  /* microservicios */
+  printf("Launching microservices..\n");
+
+  int fork_weather = fork( );
+  if (fork_weather < 0) {
+    perror("Error al iniciar el servicio del clima");
+    return 2;
+  }
+
+  if (fork_weather == 0)
+    return launch_microservice(request_weather, &exit_flag);
+
+  int fork_currency = fork( );
+
+  if (fork_currency < 0) {
+    perror("Error al iniciar el servicio de divisas");
+    return 2;
+  }
+
+  if (fork_currency == 0)
+    return launch_microservice(request_currency, &exit_flag);
 
   /* handles client requests */
   while (!exit_flag) {
