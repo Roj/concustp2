@@ -46,17 +46,8 @@ static bool _socket_write(const void *data, size_t bytes, void *cb_ctx) {
  * @return false The server should stop receiving requests, true to continue.
  */
 static bool _on_request(server_t *s, int client_fd) {
+  
   /* creates a new process to handle the request */
-  pid_t pid = fork( );
-  if (pid < 0) {
-    return false;
-  }
-
-  /* checks if it's the parent process */
-  if (pid > 0) {
-    /* lest's the child handle the request, so does nothing */
-    return true;
-  }
 
   /* deserializes the request */
   request_t req = {0};
@@ -133,12 +124,12 @@ bool server_handle_request(server_t *s) {
   }
 
   /* handles the request */
-  bool rv = _on_request(s, client);
+  _on_request(s, client);
 
   /* closes the connection */
   close(client);
 
-  return rv;
+  return true;
 }
 
 /**

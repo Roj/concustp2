@@ -49,8 +49,8 @@
  * @brief Helpers
  */
 
-static bool _set_float(void *field, field_type_t type, void *cb_ctx) {
-  if (type != field_type_float) {
+static bool _set_float(void *field, const field_desc_t *desc, void *cb_ctx) {
+  if (desc->type != field_type_float) {
     return false;
   }
 
@@ -59,8 +59,8 @@ static bool _set_float(void *field, field_type_t type, void *cb_ctx) {
   return true;
 }
 
-static bool _field_get(const void *field, field_type_t type, void *cb_ctx) {
-  if (type != field_type_integer) {
+static bool _field_get(const void *field, const field_desc_t *desc, void *cb_ctx) {
+  if (desc->type != field_type_integer) {
     return false;
   }
 
@@ -71,8 +71,8 @@ static bool _field_get(const void *field, field_type_t type, void *cb_ctx) {
   return true;
 }
 
-static bool _field_init(void *field, field_type_t type, void *cb_ctx) {
-  switch (type) {
+static bool _field_init(void *field, const field_desc_t *desc, void *cb_ctx) {
+  switch (desc->type) {
     case field_type_float:
       *(( float_t * )field) = 0.0;
       break;

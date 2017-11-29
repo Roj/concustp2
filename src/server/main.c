@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define SELF_PORT 8002
+
 /** Flag that indicates the program should finish */
 static bool exit_flag = false;
 
@@ -27,8 +29,8 @@ void sigint_handler(int signal) {
  */
 static void _handle_request(response_t *resp, const request_t *r, const server_t *serv) {
   // Send request to relevant microservice.
-  // XXX: Question: should the middleware do more than this?
-  if (!client_send(resp, SELF_PORT + r->type + 1, r)) {
+  int port = SELF_PORT + 1 + get_base_request(r->type);
+  if (!client_send(resp, port, r)) {
     perror("Error sending the request to the microservice");
     return;
   }
