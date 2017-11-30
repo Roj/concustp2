@@ -1,4 +1,5 @@
 /* include area */
+#include "buffer.h"
 #include "requests.h"
 #include <jansson.h>
 #include <stdio.h>
@@ -11,6 +12,8 @@
 #define STR(value) _STR(value)
 
 #define MSG_TYPE_KEY "@type"
+
+#define MAX_SERIALIZED_SIZE_LENGTH 128
 
 /** Serialization context. */
 typedef struct {
@@ -29,13 +32,18 @@ typedef struct {
 } deserialization_ctx_t;
 
 static int _json_dump_cb(const char *buffer, size_t size, void *data) {
-  serialization_ctx_t *ctx = data;
-  if (ctx->out(buffer, size, ctx->out_ctx)) {
-    return 0;
-  }
-  return -1;
+  buffer_t *b = data;
+  return buffer_append(b, buffer, size) ? 0 : -1;
 }
 
+/**
+ * @brief Output callback for request/response serialization that prints to STDOUT.
+ * 
+ * @param data Buffer to be printed.
+ * @param size Buffer length.
+ * @param ignored Unused.
+ * @return Always true.
+ */
 static bool _stdout_print_cb(const void *data, size_t size, void *ignored) {
   printf("%*s", ( int )size, ( const char * )data);
   return true;
@@ -174,15 +182,18 @@ static bool _message_serialize(const void *msg, const message_desc_t *desc, writ
   }
 
   /* dumps to string through the output callback */
-  serialization_ctx_t ctx = {.out = out, .out_ctx = out_ctx};
-  bool success = json_dump_callback(json, _json_dump_cb, &ctx, 0) == 0;
+  buffer_t b;
+  buffer_init(&b);
+
+  bool success = json_dump_callback(json, _json_dump_cb, &b, JSON_DISABLE_EOF_CHECK) == 0;
   json_decref(json);
 
-  if(success) {
-    return out("\n", 1, out_ctx);
-  } else {
+  if(!success) {
     return false;
   }
+
+  /* sends the JSON */
+  return out(buffer_get_data(&b), buffer_get_len(&b), out_ctx);
 }
 
 /**
@@ -215,7 +226,7 @@ bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {
  */
 bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx) {
   /* deserializes the JSON object from the input callback */
-  json_t *json = json_load_callback(in, in_ctx, 0, NULL);
+  json_t *json = json_load_callback(in, in_ctx, JSON_DISABLE_EOF_CHECK, NULL);
   if (json == NULL) {
     return false;
   }

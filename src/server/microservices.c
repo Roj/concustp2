@@ -2,10 +2,16 @@
 #include <jansson.h>
 #define WEATHER_JSON_FILE "weather.json"
 #define CURRENCY_JSON_FILE "currency.json"
+#define INVALID_VALUE -999
+#define VALID(n) (n) != INVALID_VALUE
 
-typedef struct weather_ctx { json_t *json; } weather_ctx_t;
+typedef struct weather_ctx {
+  json_t *json;
+} weather_ctx_t;
 
-typedef struct currency_ctx { json_t *json; } currency_ctx_t;
+typedef struct currency_ctx {
+  json_t *json;
+} currency_ctx_t;
 
 /**
  * @brief Allocates the context for a microsever of type weather.
@@ -81,30 +87,70 @@ void _create_currency_context(server_t *serv) {
  *
  * @param weather context of server (w/ structures), city name and struct* weather response.
  */
-void _get_city_weather(weather_ctx_t *context, const string_t *city, response_weather_t *resp) {
+bool _get_city_weather(weather_ctx_t *context, const string_t *city, response_weather_t *resp) {
   json_t *weather_json = json_object_get(context->json, str_to_cstr(city));
   if (weather_json == NULL) {
     perror("Error trying to fetch weather info for city");
-    return;
+    return false;
   }
   // This doesn't lose memory because of borrowed references.
   // https://jansson.readthedocs.io/en/2.10/apiref.html#c.json_decref
   resp->humidity = json_integer_value(json_object_get(weather_json, "humidity"));
   resp->pressure = json_real_value(json_object_get(weather_json, "pressure"));
   resp->temperature = json_real_value(json_object_get(weather_json, "temperature"));
+
+  return true;
 }
+
 /**
- * @brief Handle the weather micro service request.
+ * @brief Updates the weather context with new valid values in a request.
  *
- * @param response and request structures, along with server structure.
+ * @param weather context of server (w/ structures), city name and ptr to struct weather **request**.
+ */
+bool _set_city_weather(weather_ctx_t *context, const string_t *city, const request_t *r) {
+  json_t *weather_json = json_object_get(context->json, str_to_cstr(city));
+  if (weather_json == NULL) {
+    perror("Error trying to fetch weather info for city");
+    return false;
+  }
+  // We could define some macros to make this code less cluttered.
+  if (VALID(r->u.post_weather.humidity))
+    json_integer_set(json_object_get(weather_json, "humidity"), r->u.post_weather.humidity);
+  if (VALID(r->u.post_weather.pressure))
+    json_real_set(json_object_get(weather_json, "pressure"), r->u.post_weather.pressure);
+  if (VALID(r->u.post_weather.temperature))
+    json_real_set(json_object_get(weather_json, "temperature"), r->u.post_weather.temperature);
+
+  return true;
+}
+
+/**
+ * @brief Request callback of weather microservice.
+ *
+ * @param Pointers to response, request and server struct.
  */
 static void _handle_weather(response_t *resp, const request_t *r, const server_t *serv) {
-  printf("Request: weather\n");
-  printf(" - city: %s\n", str_to_cstr(&r->u.weather.city));
-  // TODO: send weather response according to city
+  printf("[MICROSERVICE] got request: ");
+  request_print(r);
+
   weather_ctx_t *context = ( weather_ctx_t * )serv->context;
-  resp->type = response_weather;
-  _get_city_weather(context, &r->u.weather.city, &resp->u.weather);
+  if (r->type == request_post_weather) {
+    resp->type = response_result;
+
+    // Set weather.
+    if(!_set_city_weather(context, &r->u.weather.city, r)) {
+      str_init(&resp->u.result.message, "Failed");
+    } else {
+      str_init(&resp->u.result.message, "Success");
+    }
+  } else {
+    // Get weather status.
+    resp->type = response_weather;
+    if(!_get_city_weather(context, &r->u.weather.city, &resp->u.weather)) {
+      resp->type = response_result;
+      str_init(&resp->u.result.message, "Not found");
+    }
+  }
 }
 
 /**
@@ -112,22 +158,63 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
  *
  * @param currency context of server (w/ structures) and currency name.
  */
-double _get_currency_exchange(currency_ctx_t *context, const string_t *currency) {
-  return json_real_value(json_object_get(context->json, str_to_cstr(currency)));
+bool _get_currency_exchange(currency_ctx_t *context, const string_t *currency, float_t *exchange) {
+  json_t *value = json_object_get(context->json, str_to_cstr(currency));
+  if(value == NULL) {
+    return false;
+  }
+
+  *exchange = json_real_value(value);
+  return true;
 }
+
+/**
+ * @brief Updates the currency context with new valid values in a request.
+ *
+ * @param currency context of server (w/ structures), city name and ptr to struct currency **request**.
+ */
+bool _set_currency_exchange(currency_ctx_t *context, const string_t *currency, const request_t *r) {
+  json_t *currency_json = json_object_get(context->json, str_to_cstr(currency));
+  if (currency_json == NULL) {
+    perror("Error trying to fetch currency info for coin");
+    return false;
+  }
+  // As before, we could re-use some macros here.
+  if (VALID(r->u.post_currency.value))
+    json_real_set(currency_json, r->u.post_currency.value);
+
+  return true;
+}
+
 /**
  * @brief Handle the currency micro service request.
  *
  * @param response and request structures, along with server structure.
  */
 static void _handle_currency(response_t *resp, const request_t *r, const server_t *serv) {
-  printf("Request: currency\n");
-  printf(" - currency: %s\n", str_to_cstr(&r->u.currency.currency));
-  // TODO: send currency response according to currency
+  printf("[MICROSERVICE] got request: ");
+  request_print(r);
+
   currency_ctx_t *context = ( currency_ctx_t * )serv->context;
-  resp->type = response_currency;
-  resp->u.currency.quote = _get_currency_exchange(context, &r->u.currency.currency);
+  if (r->type == request_post_currency) {
+    resp->type = response_result;
+
+    printf("Updating currency value to %f\n", r->u.post_currency.value);
+    if(!_set_currency_exchange(context, &r->u.currency.currency, r)) {
+      str_init(&resp->u.result.message, "Failed");
+    } else {
+      str_init(&resp->u.result.message, "Success");
+    }
+  } else {
+    if (_get_currency_exchange(context, &r->u.currency.currency, &resp->u.currency.quote)) {
+      resp->type = response_currency;
+    } else {
+      resp->type = response_result;
+      str_init(&resp->u.result.message, "Not found");
+    }
+  }
 }
+
 /**
  * @brief Handle the micro service request.
  *
@@ -142,7 +229,7 @@ static void _micro_handle_request(response_t *resp, const request_t *r, const se
   // Furthermore, in the future we might add more context to the server struct
   // (pending discussion on PR #9)
 
-  if (r->type != serv->type && r->type != request_last) {
+  if (get_base_request(r->type) != serv->type && r->type != request_last) {
     perror("Sent request to wrong server!");
     return;
   }
@@ -150,16 +237,30 @@ static void _micro_handle_request(response_t *resp, const request_t *r, const se
   /* Prop: Use a hash in order to save all pairs (city, weather) or
    * (coin, value) */
 
-  switch (serv->type) {
+  switch (get_base_request(serv->type)) {
     case request_weather:
       _handle_weather(resp, r, serv);
       break;
     case request_currency:
       _handle_currency(resp, r, serv);
       break;
-    case request_last:
+    default:
       break;
   }
+}
+/**
+ * @brief Maps requests types to one of request_weather, _currency or _last.
+ *
+ * @param request type to be mapped.
+ */
+inline request_type_t get_base_request(request_type_t type) {
+  if (type == request_post_currency)
+    return request_currency;
+
+  if (type == request_post_weather)
+    return request_weather;
+
+  return type;
 }
 /**
  * @brief Launches and executes the main loop of the microservice.

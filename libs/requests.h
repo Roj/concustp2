@@ -40,7 +40,9 @@
     FIELD(weather, pressure, float)            \
     FIELD(weather, temperature, float))        \
   ENTRY(currency,                              \
-    FIELD(currency, quote, float))
+    FIELD(currency, quote, float))             \
+  ENTRY(result,                                \
+    FIELD(result, message, string))
 
 // clang-format on
 
