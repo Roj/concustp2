@@ -18,10 +18,8 @@ static size_t _socket_read(void *output, size_t bytes, void *cb_ctx) {
   int *fd = cb_ctx;
 
   ssize_t bytes_read = 0;
-  printf("reading %zu\n", bytes);
   do {
     bytes_read += recv(*fd, ( char * )output + bytes_read, bytes - bytes_read, 0);
-    printf("read %d %*s\n", ( int )bytes_read, ( int )bytes_read, ( char * )output);
   } while (errno == EINTR);
 
   /* must have read the exact number of bytes requested*/
@@ -128,6 +126,10 @@ bool server_handle_request(server_t *s) {
 
   /* waits for a client to connect */
   int client = accept(s->fd, ( struct sockaddr * )&s->cli_addr, ( socklen_t * )&addr_size);
+  if(client < 0 && errno == EINTR) {
+    return true;    
+  }
+
   if (client < 0) {
     perror("accept");
     return false;
