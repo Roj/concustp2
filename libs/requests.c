@@ -1,5 +1,6 @@
 /* include area */
 #include "requests.h"
+#include <jansson.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +9,8 @@
  */
 #define _STR(value) #value
 #define STR(value) _STR(value)
+
+#define MSG_TYPE_KEY "@type"
 
 /** Serialization context. */
 typedef struct {
@@ -25,49 +28,16 @@ typedef struct {
   void *in_ctx;
 } deserialization_ctx_t;
 
-/**
- * @brief Serializes a field size and writes it through the output callback.
- *
- * @param field_size Value to be serialized.
- * @param out Callback where the output is written to.
- * @param out_ctx Pointer passed to the out callback.
- * @return false on error, true on success.
- */
-static bool _field_size_serialize(size_t field_size, write_cb_t out, void *out_ctx) {
-  char buffer[MAX_SIZE_IN_BYTES + 1];
-  if (snprintf(buffer, sizeof(buffer), "%0" STR(MAX_SIZE_IN_BYTES) "zu", field_size) >= sizeof(buffer))
-    return false;
-
-  return out(buffer, MAX_SIZE_IN_BYTES, out_ctx);
-}
-
-static bool _parse_char(size_t *out, char c) {
-  /* checks if it's a numeric value */
-  if (c < '0' || c > '9')
-    return false;
-
-  /* converts to size_t */
-  *out = c - '0';
-  return true;
-}
-
-static bool _field_size_deserialize(size_t *field_size, read_cb_t in, void *in_ctx) {
-  char buffer[MAX_SIZE_IN_BYTES];
-  if (!in(buffer, sizeof(buffer), in_ctx) >= sizeof(buffer))
-    return false;
-
-  /* parses the field size */
-  *field_size = 0;
-  for (size_t i = 0; i < MAX_SIZE_IN_BYTES; i++) {
-    *field_size *= 10;
-
-    size_t digit;
-    if (!_parse_char(&digit, buffer[i]))
-      return false;
-
-    *field_size += digit;
+static int _json_dump_cb(const char *buffer, size_t size, void *data) {
+  serialization_ctx_t *ctx = data;
+  if (ctx->out(buffer, size, ctx->out_ctx)) {
+    return 0;
   }
+  return -1;
+}
 
+static bool _stdout_print_cb(const void *data, size_t size, void *ignored) {
+  printf("%*s", ( int )size, ( const char * )data);
   return true;
 }
 
@@ -80,24 +50,33 @@ static bool _field_size_deserialize(size_t *field_size, read_cb_t in, void *in_c
  * @return false on error, true on success.
  */
 static bool _field_serialize(const void *field, const field_desc_t *desc, void *cb_ctx) {
-  serialization_ctx_t *ctx = cb_ctx;
+  json_t *json = cb_ctx;
 
-  /* gets the number of bytes required to serialize the field */
-  size_t buffer_size = field_to_cstr(NULL, 0, field, desc->type);
-  if (buffer_size == 0)
+  json_t *json_field = NULL;
+  switch (desc->type) {
+    case field_type_integer:
+      json_field = json_integer(*( integer_t * )field);
+      break;
+    case field_type_float:
+      json_field = json_real(*( float_t * )field);
+      break;
+    case field_type_string:
+      json_field = json_string(str_to_cstr(field));
+      break;
+  }
+
+  if (json_field == NULL) {
     return false;
+  }
 
-  /* serializes the field */
-  char buffer[buffer_size];
-  if (field_to_cstr(buffer, buffer_size, field, desc->type) == 0)
+  /* sets the JSON encoded fields into the output object */
+  if (json_object_set_new_nocheck(json, desc->name, json_field) != 0) {
+    json_decref(json_field);
     return false;
+  }
 
-  /* outputs the buffer size and it's content */
-  if (!_field_size_serialize(buffer_size - 1, ctx->out, ctx->out_ctx))
-    return false;
-
-  /* writes the field excluding the terminating null character */
-  return ctx->out(buffer, buffer_size - 1, ctx->out_ctx);
+  /* success */
+  return true;
 }
 
 /**
@@ -109,22 +88,101 @@ static bool _field_serialize(const void *field, const field_desc_t *desc, void *
  * @return false on error, true on success.
  */
 static bool _field_deserialize(void *field, const field_desc_t *desc, void *cb_ctx) {
-  deserialization_ctx_t *ctx = cb_ctx;
+  json_t *json = cb_ctx;
 
-  /* gets the number of bytes used to serialize the field */
-  size_t field_size;
-  if (!_field_size_deserialize(&field_size, ctx->in, ctx->in_ctx))
+  /* gets the corresponding JSON key */
+  json_t *json_field = json_object_get(json, desc->name);
+  if (json_field == NULL) {
     return false;
+  }
 
-  char buffer[field_size + 1];
-  if (!ctx->in(buffer, field_size, ctx->in_ctx))
+  switch (desc->type) {
+    case field_type_integer:
+      if (json_typeof(json_field) != JSON_INTEGER) {
+        return false;
+      }
+      *( integer_t * )field = json_integer_value(json_field);
+      return true;
+    case field_type_float:
+      if (json_typeof(json_field) != JSON_REAL) {
+        return false;
+      }
+      *( float_t * )field = json_real_value(json_field);
+      return true;
+    case field_type_string:
+      if (json_typeof(json_field) != JSON_STRING) {
+        return false;
+      }
+      return str_init(field, json_string_value(json_field));
+  }
+
+  /* unreachable */
+  return false;
+}
+
+/**
+ * @brief Converts a message into a JSON object.
+ *
+ * @param msg Message struct to convert (the union).
+ * @param desc Message description.
+ * @return JSON object on success, NULL on error.
+ */
+static json_t *_message_to_json(const void *msg, const message_desc_t *desc) {
+  /* creates the JSON object that will hold the message */
+  json_t *json = json_object( );
+  if (json_object_set_nocheck(json, MSG_TYPE_KEY, json_string_nocheck(desc->name)) != 0) {
+    json_decref(json);
+    return NULL;
+  }
+
+  if (!message_iter_const(msg, desc, _field_serialize, json)) {
+    json_decref(json);
+    return NULL;
+  }
+
+  /* returns the JSON object */
+  return json;
+}
+
+/**
+ * @brief Loads a message from a JSON object.
+ *
+ * @param msg Message to load (the union).
+ * @param desc Message description.
+ * @param json JSON object where the message is loaded from.
+ * @return false on error.
+ */
+static bool _message_from_json(void *msg, const message_desc_t *desc, json_t *json) {
+  /* deserializes from the JSON object */
+  return message_iter(msg, desc, _field_deserialize, json);
+}
+
+/**
+ * @brief Serializes a message and sends it through an output callback.
+ *
+ * @param msg Message to serialize (the union).
+ * @param desc Message description.
+ * @param out Output callback.
+ * @param out_ctx Output callback context.
+ * @return false on error.
+ */
+static bool _message_serialize(const void *msg, const message_desc_t *desc, write_cb_t out, void *out_ctx) {
+  /* creates the JSON object that will hold the message */
+  json_t *json = _message_to_json(msg, desc);
+  if (json == NULL) {
     return false;
+  }
 
-  /* appends the terminating null character */
-  buffer[field_size] = '\0';
+  /* dumps to string through the output callback */
+  serialization_ctx_t ctx = {.out = out, .out_ctx = out_ctx};
+  bool success = json_dump_callback(json, _json_dump_cb, &ctx, 0) == 0;
+  json_decref(json);
 
-  /* deserializes */
-  return field_from_cstr(field, desc->type, buffer);
+  if(success) {
+    return out("\n", 1, out_ctx);
+  } else {
+    return false;
+  }
 }
 
 /**
@@ -142,12 +200,9 @@ bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {
     return false;
   }
 
-  if (!out(&type, 1, out_ctx))
-    return false;
-
-  serialization_ctx_t iter_ctx = {.out = out, .out_ctx = out_ctx};
+  /* serialization */
   const message_desc_t *desc = &request_descs[r->type];
-  return message_iter_const(&r->u, desc, _field_serialize, &iter_ctx);
+  return _message_serialize(&r->u, desc, out, out_ctx);
 }
 
 /**
@@ -159,20 +214,52 @@ bool request_serialize(const request_t *r, write_cb_t out, void *out_ctx) {
  * @return false on error, true on success.
  */
 bool request_deserialize(request_t *r, read_cb_t in, void *in_ctx) {
-  /* the first byte indicates the type */
-  char type;
-  if (!in(&type, sizeof(type), in_ctx))
-    return false;
-
-  /* sets the type */
-  r->type = type;
-  if (type >= request_last) {
+  /* deserializes the JSON object from the input callback */
+  json_t *json = json_load_callback(in, in_ctx, 0, NULL);
+  if (json == NULL) {
     return false;
   }
 
-  deserialization_ctx_t iter_ctx = {.in = in, .in_ctx = in_ctx};
+  /* gets the request type */
+  json_t *type = json_object_get(json, MSG_TYPE_KEY);
+  if (type == NULL || json_typeof(type) != JSON_STRING) {
+    json_decref(json);
+    return false;
+  }
+
+  /* gets the coresponding description */
+  r->type = request_last;
+  const char *type_cstr = json_string_value(type);
+  for (request_type_t t = 0; t < request_last; t++) {
+    if (strcmp(type_cstr, request_descs[t].name) == 0) {
+      r->type = t;
+      break;
+    }
+  }
+
+  if (r->type == request_last) {
+    json_decref(json);
+    return false;
+  }
+
+  /* deserializes from the JSON object */
   const message_desc_t *desc = &request_descs[r->type];
-  return message_iter(&r->u, desc, _field_deserialize, &iter_ctx);
+  bool success = _message_from_json(&r->u, desc, json);
+
+  json_decref(json);
+  return success;
+}
+
+/**
+ * @brief Prints a request through STDOUT.
+ *
+ * @param r Request to print.
+ */
+void request_print(const request_t *r) {
+  /* serialization */
+  const message_desc_t *desc = &request_descs[r->type];
+  _message_serialize(&r->u, desc, _stdout_print_cb, NULL);
+  printf("\n");
 }
 
 /**
@@ -191,12 +278,9 @@ bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
     return false;
   }
 
-  if (!out(&type, 1, out_ctx))
-    return false;
-
-  serialization_ctx_t iter_ctx = {.out = out, .out_ctx = out_ctx};
+  /* serialization */
   const message_desc_t *desc = &response_descs[r->type];
-  return message_iter_const(&r->u, desc, _field_serialize, &iter_ctx);
+  return _message_serialize(&r->u, desc, out, out_ctx);
 }
 
 /**
@@ -208,18 +292,50 @@ bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
  * @return false on error, true on success.
  */
 bool response_deserialize(response_t *r, read_cb_t in, void *in_ctx) {
-  /* the first byte indicates the type */
-  char type;
-  if (!in(&type, sizeof(type), in_ctx))
-    return false;
-
-  /* sets the type */
-  r->type = type;
-  if (type >= response_last) {
+  /* deserializes the JSON object from the input callback */
+  json_t *json = json_load_callback(in, in_ctx, 0, NULL);
+  if (json == NULL) {
     return false;
   }
 
-  deserialization_ctx_t iter_ctx = {.in = in, .in_ctx = in_ctx};
+  /* gets the request type */
+  json_t *type = json_object_get(json, MSG_TYPE_KEY);
+  if (type == NULL || json_typeof(type) != JSON_STRING) {
+    json_decref(json);
+    return false;
+  }
+
+  /* gets the coresponding description */
+  r->type = response_last;
+  const char *type_cstr = json_string_value(type);
+  for (response_type_t t = 0; t < response_last; t++) {
+    if (strcmp(type_cstr, response_descs[t].name) == 0) {
+      r->type = t;
+      break;
+    }
+  }
+
+  if (r->type == response_last) {
+    json_decref(json);
+    return false;
+  }
+
+  /* deserializes from the JSON object */
   const message_desc_t *desc = &response_descs[r->type];
-  return message_iter(&r->u, desc, _field_deserialize, &iter_ctx);
+  bool success = _message_from_json(&r->u, desc, json);
+
+  json_decref(json);
+  return success;
+}
+
+/**
+ * @brief Prints a response through STDOUT.
+ *
+ * @param r Response to print.
+ */
+void response_print(const response_t *r) {
+  /* serialization */
+  const message_desc_t *desc = &response_descs[r->type];
+  _message_serialize(&r->u, desc, _stdout_print_cb, NULL);
+  printf("\n");
 }

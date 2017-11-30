@@ -10,16 +10,16 @@
 
 // clang-format off
 
-#define MSG1( )\
+#define MSG1( )                            \
   ENTRY(type1,                             \
-    FIELD(type1, bar, float))               \
+    FIELD(type1, bar, float))              \
   ENTRY(type2,                             \
     FIELD(type2, foo, string))
 
 #define MSG2( )                            \
   ENTRY(ex1,                               \
     FIELD(ex1, integer, integer)           \
-    FIELD(ex1, flt, float)               \
+    FIELD(ex1, flt, float)                 \
     FIELD(ex1, string, string))            \
   ENTRY(ex2,                               \
     FIELD(ex2, field, integer))

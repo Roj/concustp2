@@ -43,6 +43,8 @@ typedef struct message_desc {
   const struct field_desc *fields;
   /** Number of fields (i.e. elements in the array "fields"). */
   size_t num_fields;
+  /** Message name as a C string. */
+  const char *name;
 } message_desc_t;
 
 /*--------------------------------------------------------------------------

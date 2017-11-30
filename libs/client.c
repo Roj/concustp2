@@ -10,9 +10,9 @@
  * @param output Output buffer.
  * @param bytes Number of bytes to read.
  * @param cb_ctx Callback context.
- * @return false on error, true on success.
+ * @return bytes read.
  */
-static bool _socket_read(void *output, size_t bytes, void *cb_ctx) {
+static size_t _socket_read(void *output, size_t bytes, void *cb_ctx) {
   int *fd = cb_ctx;
 
   ssize_t bytes_read = 0;
@@ -21,7 +21,7 @@ static bool _socket_read(void *output, size_t bytes, void *cb_ctx) {
   } while (errno == EINTR);
 
   /* must have read the exact number of bytes requested*/
-  return (bytes_read == bytes);
+  return bytes_read;
 }
 
 /**

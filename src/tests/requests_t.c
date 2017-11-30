@@ -23,14 +23,15 @@ static bool _write_cb(const void *data, size_t bytes, void *cb_ctx) {
   return true;
 }
 
-static bool _read_cb(void *data, size_t bytes, void *cb_ctx) {
+static size_t _read_cb(void *data, size_t bytes, void *cb_ctx) {
   buffer_t *buffer = cb_ctx;
-  if (bytes > sizeof(buffer->data) - buffer->bytes_read)
-    return false;
+  size_t bytes_to_copy = buffer->bytes - buffer->bytes_read;
+  if (bytes_to_copy > bytes)
+    bytes_to_copy = bytes;
 
-  memcpy(data, buffer->data + buffer->bytes_read, bytes);
-  buffer->bytes_read += bytes;
-  return true;
+  memcpy(data, buffer->data + buffer->bytes_read, bytes_to_copy);
+  buffer->bytes_read += bytes_to_copy;
+  return bytes_to_copy;
 }
 
 TEST(RequestSerialize) {
@@ -41,17 +42,13 @@ TEST(RequestSerialize) {
     buffer_t buffer = {0};
     ASSERT_TRUE(request_serialize(&r, _write_cb, &buffer));
 
-    /* checks the serialized size: 1 + 4 + 5 (type + field size + content) */
-    ASSERT_EQ(buffer.bytes, 10);
+    /* deserializes the request */
+    request_t rd = {0};
+    ASSERT_TRUE(request_deserialize(&rd, _read_cb, &buffer));
 
-    /* checks the type */
-    ASSERT_EQ(buffer.data[0], request_currency);
-
-    /* checks the field size */
-    ASSERT_EQ(memcmp(buffer.data + 1, "0005", MAX_SIZE_IN_BYTES), 0);
-
-    /* checks the field content */
-    ASSERT_EQ(memcmp(buffer.data + 5, PESOS, 5), 0);
+    /* compares the fields */
+    ASSERT_EQ(r.type, rd.type);
+    ASSERT_EQ(str_cmp(&r.u.currency.currency, &rd.u.currency.currency), 0);
   }
   {
     request_t r = {.type = request_weather};
@@ -60,57 +57,13 @@ TEST(RequestSerialize) {
     buffer_t buffer = {0};
     ASSERT_TRUE(request_serialize(&r, _write_cb, &buffer));
 
-    /* checks the serialized size: 1 + 4 + 12 (type + field size + content) */
-    ASSERT_EQ(buffer.bytes, 17);
+    /* deserializes the request */
+    request_t rd = {0};
+    ASSERT_TRUE(request_deserialize(&rd, _read_cb, &buffer));
 
-    /* checks the type */
-    ASSERT_EQ(buffer.data[0], request_weather);
-
-    /* checks the field size */
-    ASSERT_EQ(memcmp(buffer.data + 1, "0012", MAX_SIZE_IN_BYTES), 0);
-
-    /* checks the field content */
-    ASSERT_EQ(memcmp(buffer.data + 5, BSAS, 5), 0);
-  }
-}
-
-TEST(RequestDeserialize) {
-  {
-#define DATA                                                                                                 \
-  "\x01"                                                                                                     \
-  "0007"                                                                                                     \
-  "dollars"
-
-    request_t r;
-    buffer_t buffer = {0};
-    buffer.bytes = sizeof(DATA) - 1;
-    memcpy(buffer.data, DATA, sizeof(DATA));
-
-    ASSERT_TRUE(request_deserialize(&r, _read_cb, &buffer));
-    ASSERT_EQ(buffer.bytes_read, buffer.bytes);
-
-    ASSERT_EQ(r.type, request_currency);
-    ASSERT_EQ(cstr_cmp(&r.u.currency.currency, "dollars"), 0);
-
-#undef DATA
-  }
-  {
-#define DATA                                                                                                 \
-  "\x00"                                                                                                     \
-  "0019" SE
-
-    request_t r;
-    buffer_t buffer = {0};
-    buffer.bytes = sizeof(DATA) - 1;
-    memcpy(buffer.data, DATA, sizeof(DATA));
-
-    ASSERT_TRUE(request_deserialize(&r, _read_cb, &buffer));
-    ASSERT_EQ(buffer.bytes_read, buffer.bytes);
-
-    ASSERT_EQ(r.type, request_weather);
-    ASSERT_EQ(cstr_cmp(&r.u.weather.city, SE), 0);
-
-#undef DATA
+    /* compares the fields */
+    ASSERT_EQ(r.type, rd.type);
+    ASSERT_EQ(str_cmp(&r.u.weather.city, &rd.u.weather.city), 0);
   }
 }
 
@@ -124,22 +77,14 @@ TEST(ResponseSerialize) {
     buffer_t buffer = {0};
     ASSERT_TRUE(response_serialize(&r, _write_cb, &buffer));
 
-    /* checks the serialized size: 1 + 4 + 2 + 4 + 6 + 4 + 7 */
-    ASSERT_EQ(buffer.bytes, 28);
+    /* deserializes the response */
+    response_t rd = {0};
+    ASSERT_TRUE(response_deserialize(&rd, _read_cb, &buffer));
 
-    /* checks the type */
-    ASSERT_EQ(buffer.data[0], response_weather);
-
-    /* checks the field size */
-    ASSERT_EQ(memcmp(buffer.data + 1, "0002", MAX_SIZE_IN_BYTES), 0);
-
-    /* checks the field content */
-    ASSERT_EQ(memcmp(buffer.data + 5, "57", 2), 0);
-
-    /* checks the other fields */
-    ASSERT_EQ(memcmp(buffer.data + 7, "0006", MAX_SIZE_IN_BYTES), 0);
-    ASSERT_EQ(memcmp(buffer.data + 11, "1.2000", 2), 0);
-    ASSERT_EQ(memcmp(buffer.data + 17, "0007", MAX_SIZE_IN_BYTES), 0);
-    ASSERT_EQ(memcmp(buffer.data + 21, "27.3000", 2), 0);
+    /* compares the fields */
+    ASSERT_EQ(r.type, rd.type);
+    ASSERT_EQ(r.u.weather.humidity, rd.u.weather.humidity);
+    ASSERT_EQ(r.u.weather.pressure, rd.u.weather.pressure);
+    ASSERT_EQ(r.u.weather.temperature, rd.u.weather.temperature);
   }
 }
