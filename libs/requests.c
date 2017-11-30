@@ -189,7 +189,7 @@ static bool _message_serialize(const void *msg, const message_desc_t *desc, writ
 
   /* dumps to string through the output callback */
   serialization_ctx_t ctx = {.out = out, .out_ctx = out_ctx};
-  bool success = json_dump_callback(json, _json_dump_cb, &ctx, JSON_DISABLE_EOF_CHECK) == 0;
+  bool success = (json_dump_callback(json, _json_dump_cb, &ctx, JSON_INDENT(4)) == 0);
 
   json_decref(json);
   return success;
@@ -303,7 +303,7 @@ bool response_serialize(const response_t *r, write_cb_t out, void *out_ctx) {
  */
 bool response_deserialize(response_t *r, read_cb_t in, void *in_ctx) {
   /* deserializes the JSON object from the input callback */
-  json_t *json = json_load_callback(in, in_ctx, 0, NULL);
+  json_t *json = json_load_callback(in, in_ctx, JSON_DISABLE_EOF_CHECK, NULL);
   if (json == NULL) {
     return false;
   }
