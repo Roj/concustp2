@@ -1,32 +1,25 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdarg.h>
 #include <sys/time.h>
 
-
-/* Log structure used to represent the log. 
+/* Log structure used to represent the log.
  * Shall we add more fields to it? */
 typedef struct log_ {
-	FILE* log_file;
-	struct timeval time_created;
-	bool debug;
+  FILE *log_file;
+  struct timeval time_created;
+  bool debug;
 } log_t;
 
 /* Log level specifier for writing to the log. */
-typedef enum log_level_ {NONE_L,
-			STAT_L,
-			DEBUG_L,
-		       	INFO_L,
-		       	WARNING_L,
-		       	ERROR_L,
-		       	CRITICAL_L} log_level;
+typedef enum log_level_ { NONE_L, STAT_L, DEBUG_L, INFO_L, WARNING_L, ERROR_L, CRITICAL_L } log_level;
 
 /* Closes the received log file and destroys the log itself.*/
-void log_close();
+void log_close( );
 
 /* Enables or disables "debug mode" for log depending on the
  * value received in set_debug. Only NONE_L log level strings
@@ -39,6 +32,6 @@ void log_set_debug_mode(bool set_debug);
  * specify list of arguments. If successful, returns
  * the total of characters written. Otherwise, a negative
  * number is returned.*/
-int log_write(log_level lvl, char* msg, ... );
+int log_write(log_level lvl, char *msg, ...);
 
 #endif
