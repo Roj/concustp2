@@ -5,13 +5,9 @@
 #define INVALID_VALUE -999
 #define VALID(n) (n) != INVALID_VALUE
 
-typedef struct weather_ctx {
-  json_t *json;
-} weather_ctx_t;
+typedef struct weather_ctx { json_t *json; } weather_ctx_t;
 
-typedef struct currency_ctx {
-  json_t *json;
-} currency_ctx_t;
+typedef struct currency_ctx { json_t *json; } currency_ctx_t;
 
 /**
  * @brief Allocates the context for a microsever of type weather.
@@ -138,7 +134,7 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
     resp->type = response_result;
 
     // Set weather.
-    if(!_set_city_weather(context, &r->u.weather.city, r)) {
+    if (!_set_city_weather(context, &r->u.weather.city, r)) {
       str_init(&resp->u.result.message, "Failed");
     } else {
       str_init(&resp->u.result.message, "Success");
@@ -146,7 +142,7 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
   } else {
     // Get weather status.
     resp->type = response_weather;
-    if(!_get_city_weather(context, &r->u.weather.city, &resp->u.weather)) {
+    if (!_get_city_weather(context, &r->u.weather.city, &resp->u.weather)) {
       resp->type = response_result;
       str_init(&resp->u.result.message, "Not found");
     }
@@ -160,7 +156,7 @@ static void _handle_weather(response_t *resp, const request_t *r, const server_t
  */
 bool _get_currency_exchange(currency_ctx_t *context, const string_t *currency, float_t *exchange) {
   json_t *value = json_object_get(context->json, str_to_cstr(currency));
-  if(value == NULL) {
+  if (value == NULL) {
     return false;
   }
 
@@ -200,7 +196,7 @@ static void _handle_currency(response_t *resp, const request_t *r, const server_
     resp->type = response_result;
 
     printf("Updating currency value to %f\n", r->u.post_currency.value);
-    if(!_set_currency_exchange(context, &r->u.currency.currency, r)) {
+    if (!_set_currency_exchange(context, &r->u.currency.currency, r)) {
       str_init(&resp->u.result.message, "Failed");
     } else {
       str_init(&resp->u.result.message, "Success");

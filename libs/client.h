@@ -6,8 +6,8 @@
 #include <netdb.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 /*-------------------------------------------------------------------------
   Client

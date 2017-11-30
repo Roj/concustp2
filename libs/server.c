@@ -54,7 +54,7 @@ static bool _socket_write(const void *data, size_t bytes, void *cb_ctx) {
  * @return false The server should stop receiving requests, true to continue.
  */
 static bool _on_request(server_t *s, int client_fd) {
-  
+
   /* creates a new process to handle the request */
 
   /* deserializes the request */
@@ -126,8 +126,8 @@ bool server_handle_request(server_t *s) {
 
   /* waits for a client to connect */
   int client = accept(s->fd, ( struct sockaddr * )&s->cli_addr, ( socklen_t * )&addr_size);
-  if(client < 0 && errno == EINTR) {
-    return true;    
+  if (client < 0 && errno == EINTR) {
+    return true;
   }
 
   if (client < 0) {

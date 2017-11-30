@@ -111,9 +111,7 @@ typedef enum { MESSAGES CONCAT(MESSAGE_NAME, _last) } CONCAT(MESSAGE_NAME, _type
  */
 #define FIELD(msg_name, field_name, field_type) field_type##_t field_name;
 #define ENTRY(name, ...)                                                                                     \
-  typedef struct {                                                                                           \
-    __VA_ARGS__                                                                                              \
-  } CONCAT4(MESSAGE_NAME, _, name, _t);
+  typedef struct { __VA_ARGS__ } CONCAT4(MESSAGE_NAME, _, name, _t);
 
 MESSAGES
 
@@ -154,10 +152,10 @@ MESSAGES
  *    };
  */
 #define FIELD(msg_name, field_name, field_type)
-#define ENTRY(_name, ...)                                                                                     \
-  [CONCAT3(MESSAGE_NAME, _, _name)] = {.name = #_name,                                                        \
-                                      .num_fields = ASIZE(CONCAT4(MESSAGE_NAME, _name, _, fields_list)),      \
-                                      .fields = CONCAT4(MESSAGE_NAME, _name, _, fields_list)},
+#define ENTRY(_name, ...)                                                                                    \
+  [CONCAT3(MESSAGE_NAME, _, _name)] = {.name = #_name,                                                       \
+                                       .num_fields = ASIZE(CONCAT4(MESSAGE_NAME, _name, _, fields_list)),    \
+                                       .fields = CONCAT4(MESSAGE_NAME, _name, _, fields_list)},
 
 static const struct message_desc CONCAT(MESSAGE_NAME, _descs)[] = {MESSAGES};
 
