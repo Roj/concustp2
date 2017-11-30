@@ -7,6 +7,8 @@ author:
 toc: yes
 ---
 
+# Técnicas de programación concurrente I (75.59)
+
 ## 1. Introducción
 
 En este proyecto, nos dispusimos a desarrollar una aplicación capaz de simular un portal de noticias,
