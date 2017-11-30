@@ -7,7 +7,7 @@ author:
 toc: yes
 ---
 
-##1. Introducción
+## 1. Introducción
 
 En este proyecto, nos dispusimos a desarrollar una aplicación capaz de simular un portal de noticias,
 basándonos en el modelo cliente-servidor, y una arquitectura orientada a microservicios. Así, el objetivo del
@@ -17,7 +17,7 @@ la materia a esta situación, ante lo cual se optó por emplear sockets.
 A continuación, se detallarán los pasos tomados durante el desarrollo del trabajo, haciendo hincapié en la
 implementación de la concurrencia y la comunicación entre los procesos.
 
-##2. División en procesos
+## 2. División en procesos
 Como primer tarea en este proyecto, se procedió a identificar los distintos procesos concurrentes que luego
 conformarían la estructura de la aplicación. La idea en este primer paso fue así la de poder reconocer agentes
 o entidades que pudieran actuar de forma concurrente, para poder encaminar el diseño en base a este análisis.
@@ -68,10 +68,30 @@ compartida u otro tipo de comunicación entre procesos, la actualización de la 
 pedido del administrador se dificultaba. Por esto, optamos por un servidor que atiende a los requests
 de manera iterativa.
 
-##3. Protocolo de comunicación
 
-Meter aquí: diagrama de secuencias, estructura de mensajes, serialización, etc.
+## 3. Protocolo de comunicación
 
-##4. Conclusiones
+La comunicación se realiza enteramente mediante sockets. Los pedidos y respuestas se serializan en formato JSON
+para no depender de una arquitectura en particular.
+En el alto nivel, los datos se guardan en estructuras (*mensajes*) los cuales soportan 3 tipos de datos:
+ * float
+ * integer
+ * string
+
+En el alto nivel, estos mensajes se cargan con los valores deseados y luego se envían, obteniendo una respuesta
+que también es un mensaje.
+
+Los servidores se implementaron sobre un mismo TDA (*server_t*). Este se encarga de manipular el socket y, al
+recibir una conexión (mediante *accept*) ejecuta un callback definido al instanciar el servidor en el cual se envía
+además el request serializado. El request realiza su tarea y completa el mensaje de respuesta, el cual luego se
+serializa por el servidor hacia el cliente.
+
+![Envio de mensajes](comunicacion.png)  
+
+
+## 4. Conclusiones
+
 En síntesis, pudimos confeccionar la aplicación del proyecto de forma exitosa, pudiendo separarla en procesos
-concurrentes e implementando la comunicación entre los mismos a través de sockets. **Rellenar**
+concurrentes e implementando la comunicación entre los mismos a través de sockets. Comprobamos que los sockets
+ofrecen gran flexibilidad para la comunicación entre procesos, incluso cuando estos se encuentran en computadoras
+distintas.
