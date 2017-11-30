@@ -33,7 +33,7 @@ typedef struct {
 static int _json_dump_cb(const char *buffer, size_t size, void *data) {
   serialization_ctx_t *ctx = data;
 
-  if(!ctx->out(buffer, size, ctx->out_ctx)) {
+  if (!ctx->out(buffer, size, ctx->out_ctx)) {
     /* error */
     return -1;
   }
@@ -44,7 +44,7 @@ static int _json_dump_cb(const char *buffer, size_t size, void *data) {
 
 /**
  * @brief Output callback for request/response serialization that prints to STDOUT.
- * 
+ *
  * @param data Buffer to be printed.
  * @param size Buffer length.
  * @param ignored Unused.
@@ -144,7 +144,7 @@ static bool _field_deserialize(void *field, const field_desc_t *desc, void *cb_c
 static json_t *_message_to_json(const void *msg, const message_desc_t *desc) {
   /* creates the JSON object that will hold the message */
   json_t *json = json_object( );
-  if (json_object_set_nocheck(json, MSG_TYPE_KEY, json_string_nocheck(desc->name)) != 0) {
+  if (json_object_set_new_nocheck(json, MSG_TYPE_KEY, json_string_nocheck(desc->name)) != 0) {
     json_decref(json);
     return NULL;
   }
@@ -188,7 +188,7 @@ static bool _message_serialize(const void *msg, const message_desc_t *desc, writ
   }
 
   /* dumps to string through the output callback */
-  serialization_ctx_t ctx = { .out = out, .out_ctx = out_ctx };
+  serialization_ctx_t ctx = {.out = out, .out_ctx = out_ctx};
   bool success = json_dump_callback(json, _json_dump_cb, &ctx, JSON_DISABLE_EOF_CHECK) == 0;
 
   json_decref(json);
