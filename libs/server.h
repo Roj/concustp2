@@ -23,11 +23,7 @@ typedef struct server server_t;
  *      and after the callback is finished, it's serialized and sent to
  *      client.
  */
-typedef void (*req_handler_t)(
-  response_t *resp, 
-  const request_t *req, 
-  const struct server *serv
-);
+typedef void (*req_handler_t)(response_t *resp, const request_t *req, const struct server *serv);
 
 /** Server type */
 struct server {
@@ -35,8 +31,8 @@ struct server {
   struct sockaddr_in serv_addr;
   struct sockaddr_in cli_addr;
   req_handler_t handler;
-  request_type_t type; //Used in microservices. Ignored in middleware.
-  void* context; //Optional. Aids microservices to hold state.
+  request_type_t type; // Used in microservices. Ignored in middleware.
+  void *context;       // Optional. Aids microservices to hold state.
 };
 
 /*-------------------------------------------------------------------------
