@@ -73,13 +73,37 @@ de manera iterativa.
 
 La comunicación se realiza enteramente mediante sockets. Los pedidos y respuestas se serializan en formato JSON
 para no depender de una arquitectura en particular.
+
 En el alto nivel, los datos se guardan en estructuras (*mensajes*) los cuales soportan 3 tipos de datos:
  * float
  * integer
  * string
+ 
+Por ejemplo, para un mensaje *weather* (solicitud de datos del clima), la representación sería la siguiente:
 
-En el alto nivel, estos mensajes se cargan con los valores deseados y luego se envían, obteniendo una respuesta
-que también es un mensaje.
+```json
+{
+    "@type": "weather",
+    "city": "buenos aires"
+}
+```
+
+y una posible respuesta
+
+```json
+{
+    "@type": "weather_resp",
+    "pressure": 1.2345
+}
+```
+
+En la clave **@type** se guarda el tipo del mensaje, y el resto de las claves son los campos y sus respectivos
+valores.
+
+Los clientes envían *requests* y reciben una *ressponse* (ambos son mensajes).
+
+En el alto nivel, estos mensajes manejan como estructuras donde se cargan con los valores deseados y luego se
+envían, obteniendo una respuesta que también es una estructura (la serialización es automática).
 
 Los servidores se implementaron sobre un mismo TDA (*server_t*). Este se encarga de manipular el socket y, al
 recibir una conexión (mediante *accept*) ejecuta un callback definido al instanciar el servidor en el cual se envía
