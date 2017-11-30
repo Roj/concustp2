@@ -1,7 +1,7 @@
 /* include area */
-#include "server.h"
 #include "client.h"
 #include "microservices.h"
+#include "server.h"
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,12 +28,20 @@ void sigint_handler(int signal) {
  * @param response to be formed, request sent by client, and server struct entity.
  */
 static void _handle_request(response_t *resp, const request_t *r, const server_t *serv) {
-  // Send request to relevant microservice.
+  /* prints the request */
+  printf("[SERVER] got request: ");
+  request_print(r);
+
+  /* Send request to relevant microservice. */
   int port = SELF_PORT + 1 + get_base_request(r->type);
   if (!client_send(resp, port, r)) {
     perror("Error sending the request to the microservice");
     return;
   }
+
+  /* prints the response */
+  printf("[SERVER] sending response: ");
+  response_print(resp);
 }
 
 int main(int argc, const char *argv[]) {

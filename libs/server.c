@@ -6,16 +6,26 @@
 #include <unistd.h>
 #include <wait.h>
 
-static bool _socket_read(void *output, size_t bytes, void *cb_ctx) {
+/**
+ * @brief Reads from a socket.
+ *
+ * @param output Buffer where the read data is copied to.
+ * @param bytes Buffer size.
+ * @param cb_ctx User defined callback context.
+ * @return size_t Bytes read.
+ */
+static size_t _socket_read(void *output, size_t bytes, void *cb_ctx) {
   int *fd = cb_ctx;
 
   ssize_t bytes_read = 0;
+  printf("reading %zu\n", bytes);
   do {
-    bytes_read += recv(*fd, ( char * )output + bytes_read, bytes - bytes_read, MSG_WAITALL);
+    bytes_read += recv(*fd, ( char * )output + bytes_read, bytes - bytes_read, 0);
+    printf("read %d %*s\n", ( int )bytes_read, ( int )bytes_read, ( char * )output);
   } while (errno == EINTR);
 
   /* must have read the exact number of bytes requested*/
-  return (bytes_read == bytes);
+  return bytes_read;
 }
 
 /**
