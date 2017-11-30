@@ -4,10 +4,10 @@
 /* include area */
 #include "requests.h"
 #include <netdb.h>
-#include <socket.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 /*-------------------------------------------------------------------------
   Client
