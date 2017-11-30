@@ -1,5 +1,4 @@
 /* include area */
-#include "buffer.h"
 #include "requests.h"
 #include <jansson.h>
 #include <stdio.h>
@@ -32,8 +31,15 @@ typedef struct {
 } deserialization_ctx_t;
 
 static int _json_dump_cb(const char *buffer, size_t size, void *data) {
-  buffer_t *b = data;
-  return buffer_append(b, buffer, size) ? 0 : -1;
+  serialization_ctx_t *ctx = data;
+
+  if(!ctx->out(buffer, size, ctx->out_ctx)) {
+    /* error */
+    return -1;
+  }
+
+  /* success */
+  return 0;
 }
 
 /**
@@ -182,18 +188,11 @@ static bool _message_serialize(const void *msg, const message_desc_t *desc, writ
   }
 
   /* dumps to string through the output callback */
-  buffer_t b;
-  buffer_init(&b);
+  serialization_ctx_t ctx = { .out = out, .out_ctx = out_ctx };
+  bool success = json_dump_callback(json, _json_dump_cb, &ctx, JSON_DISABLE_EOF_CHECK) == 0;
 
-  bool success = json_dump_callback(json, _json_dump_cb, &b, JSON_DISABLE_EOF_CHECK) == 0;
   json_decref(json);
-
-  if(!success) {
-    return false;
-  }
-
-  /* sends the JSON */
-  return out(buffer_get_data(&b), buffer_get_len(&b), out_ctx);
+  return success;
 }
 
 /**
